@@ -1,5 +1,11 @@
 # `@humanmax/runtime-harness`
 
-Run state, budgets, tool registry, schema validation, checkpoints, cancellation, and the action-gateway seam.
+Run state, budgets, tool registry, action gateway, and Preview enforcement adapters.
 
-Local adapters may deny or pause undeclared effectful actions. Only a deployed external enforcement boundary can make a production enforcement claim.
+This package provides mechanics and a seam. It does not issue production authority.
+
+- Undeclared tools fail closed.
+- Read/compute tools execute without the gateway.
+- Effectful tools always go through the adapter. `LocalReviewAdapter` returns `REQUIRE_REVIEW` and does not run the handler. `DenyAllProductionAdapter` always denies and never returns `ALLOW`.
+- `productionEnforcement` remains `unconfigured`.
+- Events carry references only. Payloads are not recorded.

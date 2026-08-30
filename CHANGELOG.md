@@ -16,6 +16,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 - Scaffold integrity check (`scripts/check-scaffold.mjs`) and workspace `npm test` / `npm run typecheck`.
 - Required agent commit trailer `Co-authored-by: <Harness> + <Model>` via `scripts/co-author.mjs` and `docs/agents/commit-attribution.md`.
 - Preview public contracts in `@humanmax/contracts`: project, tool, finding, exception and rule documents, JSON Schema, `validate`, deterministic `findingId`, and `applyException` that cannot rewrite a result to `PASS`.
+- Preview Runtime Harness: run budgets, tool registry, action gateway, redacted events, `LocalReviewAdapter`, and `DenyAllProductionAdapter`. Effectful tools cannot skip the gateway or claim production enforcement.
 
 ### Changed
 
