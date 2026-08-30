@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanmax.ai/rule/v1alpha1/rule-metadata.schema.json",
+  "title": "HarnessRuleMetadata",
+  "type": "object",
+  "required": ["apiVersion", "kind", "id", "resultWhenMissing"],
+  "properties": {
+    "apiVersion": { "const": "humanmax.ai/rule/v1alpha1" },
+    "kind": { "const": "HarnessRuleMetadata" },
+    "id": { "type": "string" },
+    "resultWhenMissing": { "const": "UNKNOWN" }
+  }
+}

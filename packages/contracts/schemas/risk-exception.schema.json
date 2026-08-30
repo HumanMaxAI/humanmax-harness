@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanmax.ai/exception/v1alpha1/risk-exception.schema.json",
+  "title": "RiskException",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "humanmax.ai/exception/v1alpha1" },
+    "kind": { "const": "RiskException" },
+    "metadata": {
+      "type": "object",
+      "required": ["id", "createdAt", "expiresAt"],
+      "properties": {
+        "id": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "expiresAt": { "type": "string" }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": [
+        "ruleId",
+        "subject",
+        "owner",
+        "approver",
+        "rationale",
+        "reviewStatus"
+      ],
+      "properties": {
+        "ruleId": { "type": "string" },
+        "owner": { "type": "string", "minLength": 1 },
+        "approver": { "type": "string", "minLength": 1 },
+        "rationale": { "type": "string", "minLength": 1 },
+        "reviewStatus": { "enum": ["proposed", "approved"] }
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanmax.ai/harness/v1alpha1/tool.schema.json",
+  "title": "Tool",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "humanmax.ai/harness/v1alpha1" },
+    "kind": { "const": "Tool" },
+    "metadata": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": ["effectClass", "gateway", "inputSchemaRef", "outputSchemaRef"],
+      "properties": {
+        "effectClass": {
+          "enum": [
+            "read",
+            "compute",
+            "reversible-write",
+            "irreversible-write"
+          ]
+        },
+        "gateway": { "enum": ["required", "not-applicable"] },
+        "inputSchemaRef": { "type": "string", "minLength": 1 },
+        "outputSchemaRef": { "type": "string", "minLength": 1 },
+        "resourceScope": { "type": "string" },
+        "idempotency": { "enum": ["required", "not-applicable"] }
+      }
+    }
+  }
+}

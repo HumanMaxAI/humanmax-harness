@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanmax.ai/harness/v1alpha1/harness-project.schema.json",
+  "title": "HarnessProject",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "humanmax.ai/harness/v1alpha1" },
+    "kind": { "const": "HarnessProject" },
+    "metadata": {
+      "type": "object",
+      "required": ["projectId", "owners"],
+      "properties": {
+        "projectId": { "type": "string", "minLength": 1 },
+        "owners": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["team"],
+            "properties": {
+              "team": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": [
+        "generator",
+        "profiles",
+        "autonomy",
+        "runtime",
+        "include",
+        "exclude",
+        "ci"
+      ],
+      "properties": {
+        "generator": { "type": "object" },
+        "profiles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "contains": { "const": "base" }
+        },
+        "autonomy": { "enum": ["read-only", "assisted", "bounded"] },
+        "runtime": {
+          "type": "object",
+          "required": [
+            "defaultBudgets",
+            "undeclaredEffect",
+            "productionEnforcement",
+            "enforcementAdapter"
+          ],
+          "properties": {
+            "defaultBudgets": { "type": "object" },
+            "undeclaredEffect": { "const": "deny" },
+            "productionEnforcement": { "const": "unconfigured" },
+            "enforcementAdapter": {
+              "enum": ["local-review", "deny-all-production"]
+            }
+          }
+        },
+        "include": { "type": "array", "items": { "type": "string" } },
+        "exclude": { "type": "array", "items": { "type": "string" } },
+        "ci": { "type": "object" }
+      }
+    }
+  }
+}
