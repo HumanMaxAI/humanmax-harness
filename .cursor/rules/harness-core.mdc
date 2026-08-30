@@ -1,0 +1,16 @@
+---
+description: Core HumanMax Harness constraints for every session
+alwaysApply: true
+---
+
+# Harness core
+
+Follow `AGENTS.md`. It wins over chat unless a human explicitly overrides it.
+
+- This repo builds a generator and runtime scaffold. It does not enforce production actions or certify compliance.
+- Do not add a second tool registry or a direct effectful path around the action gateway.
+- Do not convert `FAIL`, `UNKNOWN`, or `NEEDS_HUMAN_REVIEW` into `PASS`.
+- Do not expand Preview scope (`adopt --apply`, full upgrade apply, wizard `sg-core`, Trust Engine, Python) without an explicit human request.
+- Do not put design or review documents at the repository root.
+- `packages/core` stays free of network, filesystem writes, and model calls.
+- Update `CHANGELOG.md` before a non-trivial commit. Use today's local date.

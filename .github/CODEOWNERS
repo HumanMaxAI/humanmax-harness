@@ -1,0 +1,8 @@
+# Placeholder until organisation handles are reserved.
+# * @HumanMaxAI/harness-maintainers
+
+/packages/contracts/ @HumanMaxAI/harness-maintainers
+/packages/core/ @HumanMaxAI/harness-maintainers
+/packs/ @HumanMaxAI/harness-maintainers
+/AGENTS.md @HumanMaxAI/harness-maintainers
+/.github/ @HumanMaxAI/harness-maintainers

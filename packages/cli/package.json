@@ -1,0 +1,26 @@
+{
+  "name": "@humanmax/cli",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "bin": {
+    "humanmax": "./src/cli.ts"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "files": ["src"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test --experimental-strip-types src/index.test.ts"
+  },
+  "dependencies": {
+    "@humanmax/contracts": "0.0.0"
+  }
+}

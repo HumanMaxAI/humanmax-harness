@@ -1,0 +1,15 @@
+---
+description: Design and review documents stay in separate directories
+globs: docs/**/*.md
+alwaysApply: false
+---
+
+# Documentation placement
+
+- Design (normative intent) → `docs/design/YYYY-MM-DD-<topic>.md`
+- Reviews (verdicts, findings, cuts) → `docs/reviews/YYYY-MM-DD-<topic>.md`
+- Agent operations → `docs/agents/`
+- Plans → `docs/plans/`
+- User guides → `docs/guides/`
+
+Do not mix review findings into a design file. Do not add design or review files at the repository root. Do not silently rewrite a design to match an implementation shortcut.

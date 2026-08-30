@@ -1,0 +1,15 @@
+---
+description: Parallel agent lanes, worktrees, and exclusive writes
+alwaysApply: true
+---
+
+# Multi-agent lanes
+
+This repository is developed by parallel agents. One active writer per lane.
+
+- Read `docs/agents/lanes.md` before editing.
+- Claim a free lane in `.agent-claims/<lane>.json` before the first write.
+- Work in `.worktrees/<lane>-<topic>/` when creating a branch for a lane.
+- Do not edit another claimed lane. Do not share a lane by staying in different subfolders.
+- Shared files (`AGENTS.md`, root `package.json`, `tsconfig.base.json`) need a coordinator task.
+- After parallel merges, run root `npm test` and `npm run typecheck`.

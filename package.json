@@ -1,0 +1,23 @@
+{
+  "name": "humanmax-harness",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Open-source local-first generator and runtime scaffold for assurance-ready AI agents.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "node scripts/check-scaffold.mjs && npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "typescript": "^5.9.2"
+  }
+}

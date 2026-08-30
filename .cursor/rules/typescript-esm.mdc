@@ -1,0 +1,13 @@
+---
+description: TypeScript ESM conventions for workspace packages
+globs: packages/**/*.{ts,mts,js,mjs}
+alwaysApply: false
+---
+
+# TypeScript ESM
+
+- ESM only. `"type": "module"` in every package.
+- Target maintained Node LTS (22 for CI). Do not add Next.js unless a future template selects it.
+- `packages/core` must not import `node:net`, `node:http`, `node:fs` write APIs, or any model SDK.
+- Public types and schemas belong in `@humanmax/contracts`, not copied into other packages.
+- Prefer `node:test` for package tests until a shared runner is introduced on purpose.
