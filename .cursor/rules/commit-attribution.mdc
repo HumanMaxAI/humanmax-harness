@@ -1,0 +1,16 @@
+---
+description: Every agent commit includes harness + model Co-authored-by
+alwaysApply: true
+---
+
+# Commit attribution
+
+When you create a git commit, the message body MUST end with a GitHub-valid trailer from `node scripts/co-author.mjs <Harness> <Model>`.
+
+This session: `Co-authored-by: Cursor + Grok 4.6 <cursor+grok-4.6@noreply.humanmax.ai>`
+
+- Blank line before the trailer
+- Name is `Harness + Model`, not a person's GitHub login
+- Email is `<harness>+<model-slug>@noreply.humanmax.ai`
+- Do not skip the trailer on agent-authored commits
+- See `docs/agents/commit-attribution.md`

@@ -14,3 +14,4 @@ Follow `AGENTS.md`. It wins over chat unless a human explicitly overrides it.
 - Do not put design or review documents at the repository root.
 - `packages/core` stays free of network, filesystem writes, and model calls.
 - Update `CHANGELOG.md` before a non-trivial commit. Use today's local date.
+- Agent commits must end with `Co-authored-by: Cursor + Grok 4.6 <cursor+grok-4.6@noreply.humanmax.ai>` in this session (or the matching harness + model from `scripts/co-author.mjs`).

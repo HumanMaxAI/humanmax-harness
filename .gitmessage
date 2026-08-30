@@ -1,0 +1,6 @@
+# <why this change exists>
+
+# Leave a blank line, then the harness + model trailer:
+# Co-authored-by: Cursor + Grok 4.6 <cursor+grok-4.6@noreply.humanmax.ai>
+#
+# Print one: node scripts/co-author.mjs Cursor "Grok 4.6"

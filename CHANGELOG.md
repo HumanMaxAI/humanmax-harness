@@ -14,6 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 - Documentation split: design under `docs/design/`, reviews under `docs/reviews/`, agent operations under `docs/agents/`.
 - Product review of design v0.3 at `docs/reviews/2026-08-30-product-review.md`.
 - Scaffold integrity check (`scripts/check-scaffold.mjs`) and workspace `npm test` / `npm run typecheck`.
+- Required agent commit trailer `Co-authored-by: <Harness> + <Model>` via `scripts/co-author.mjs` and `docs/agents/commit-attribution.md`.
 
 ### Changed
 

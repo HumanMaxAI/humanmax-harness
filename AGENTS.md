@@ -180,6 +180,7 @@ An agent MUST:
 5. Distinguish `PASS` / `FAIL` / `UNKNOWN` / `NEEDS_HUMAN_REVIEW`. Absence of evidence is not a pass.
 6. Update `CHANGELOG.md` with today’s local date before a non-trivial commit.
 7. Leave a clean typecheck and the workspace tests that cover the touched lane.
+8. End every agent-authored commit with a `Co-authored-by` trailer that names the harness tool and the model. See [Commits](#commits).
 
 ## Generated-project contract
 
@@ -199,6 +200,23 @@ node scripts/check-scaffold.mjs
 ```
 
 After the CLI exists, generated projects and CI use the **project-pinned** `humanmax` binary. Do not call a globally installed CLI and treat it as authoritative.
+
+## Commits
+
+Agent-authored commits must include a GitHub-valid trailer:
+
+```text
+Co-authored-by: <Harness> + <Model> <<harness>+<model-slug>@noreply.humanmax.ai>
+```
+
+Print it. Do not hand-type the email:
+
+```bash
+node scripts/co-author.mjs Cursor "Grok 4.6"
+# Co-authored-by: Cursor + Grok 4.6 <cursor+grok-4.6@noreply.humanmax.ai>
+```
+
+Put a blank line before the trailer. Details: `docs/agents/commit-attribution.md`.
 
 ## Public language
 
