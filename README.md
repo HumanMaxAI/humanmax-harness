@@ -2,11 +2,31 @@
 
 Open-source, local-first project generator and runtime scaffold for assurance-ready AI agents.
 
-This repository is in **Preview scaffold**. Packages exist and compile, but they do not yet generate a customer project. The product promise is:
+This repository is **Preview**. From this clone you can create a TypeScript `tool-agent`, run it through the action gateway, and get JSON check results. Packages are not published to npm yet; `npm create humanmax-agent@latest` is not a supported path.
 
-> Create a local-first, assurance-ready agent project with explicit action boundaries, jurisdiction-aware controls and evidence-producing CI.
+The generated project is the product. Passing local checks is not production enforcement or certification.
 
-The generated project is the product. This monorepo builds the generator, Runtime Harness, contracts, CLI, rules, and Agent Skill that keep those projects conformant.
+## First run
+
+Requires Node 22+.
+
+```bash
+npm install
+npm test
+npm run typecheck
+
+node --experimental-strip-types packages/create-humanmax-agent/src/cli.ts ./my-agent --defaults
+cd my-agent
+npm install
+npm test
+npm start
+npm run humanmax -- doctor --format json
+npm run humanmax -- check --format json
+```
+
+Default create path: TypeScript, `tool-agent`, generic fixture, `assisted`, `base`, GitHub CI. Preview does not generate `sg-core`, apply upgrades, or run `adopt`.
+
+Read tools execute. Write tools stop at the action gateway (`review`). `productionEnforcement` stays `unconfigured`.
 
 ## Documentation
 
@@ -31,23 +51,11 @@ packages/cli                     project-pinned `humanmax`
 packages/findings                rule catalogue
 ```
 
-Preview default create path: TypeScript, `tool-agent`, generic fixture, `assisted`, `base`, GitHub CI.
-
-## Develop
-
-Requires Node 22+.
-
-```bash
-npm install
-npm test
-npm run typecheck
-```
-
 This repository is a multi-agent parallel project. Read `AGENTS.md` and claim a lane before editing. Preferred isolation is a git worktree under `.worktrees/`.
 
 ## What this is not
 
-Harness does not enforce production actions, issue certification, or replace IAM, GRC, SIEM, or a secrets manager. Passing local checks is not proof that production is runtime-enforced.
+Harness does not enforce production actions, issue certification, or replace IAM, GRC, SIEM, or a secrets manager.
 
 ## License
 

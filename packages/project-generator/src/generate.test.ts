@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, readdir, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -92,4 +93,47 @@ test("generated fixture run reads, reviews writes, and never claims enforcement"
   assert.equal(result.write, "review");
   assert.equal(result.productionEnforcement, "unconfigured");
   assert.equal(result.writeExecuted, false);
+});
+
+test("generated project npm-installs and gateway tests pass from tmp", async () => {
+  const dest = await emptyDir();
+  generateProject({
+    destination: dest,
+    name: "demo-agent",
+    apply: true,
+  });
+  const pkg = JSON.parse(await readFile(join(dest, "package.json"), "utf8")) as {
+    dependencies: Record<string, string>;
+  };
+  assert.match(
+    pkg.dependencies["@humanmax/runtime-harness"] ?? "",
+    /^file:\//,
+    "file: deps must be absolute so /tmp vs /private/tmp cannot break them",
+  );
+  const install = spawnSync("npm", ["install"], { cwd: dest, encoding: "utf8" });
+  assert.equal(install.status, 0, install.stderr);
+  const tests = spawnSync("npm", ["test"], { cwd: dest, encoding: "utf8" });
+  assert.equal(tests.status, 0, tests.stdout + tests.stderr);
+  const doctor = spawnSync(
+    "npm",
+    ["run", "humanmax", "--", "doctor", "--format", "json"],
+    { cwd: dest, encoding: "utf8" },
+  );
+  assert.equal(doctor.status, 0, doctor.stdout + doctor.stderr);
+  assert.match(doctor.stdout, /unconfigured/);
+  const check = spawnSync(
+    "npm",
+    ["run", "humanmax", "--", "check", "--format", "json"],
+    { cwd: dest, encoding: "utf8" },
+  );
+  assert.equal(check.status, 0, check.stdout + check.stderr);
+  assert.match(check.stdout, /"fail":0/);
+  const dev = spawnSync(
+    "npm",
+    ["run", "humanmax", "--", "dev", "--format", "json"],
+    { cwd: dest, encoding: "utf8" },
+  );
+  assert.equal(dev.status, 0, dev.stdout + dev.stderr);
+  assert.match(dev.stdout, /"write":"review"/);
+  assert.match(dev.stdout, /"writeExecuted":false/);
 });
