@@ -16,6 +16,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 - Preview `humanmax` CLI: `dev`, `add`, `generate --check`, `upgrade --dry-run`, `test`, `doctor`, thin `check`, with JSON `CliResponse` output.
 - Canonical Skill that only instructs the project-pinned CLI JSON contract.
 
+### Changed
+
+- Agent git identity: commit and push harness work over SSH as HumanMaxAI (`docs/agents/git-identity.md`). Do not use the personal `billrain` fork or `gh` HTTPS.
+
 ## [0.0.0] - 2026-08-30
 
 ### Added
