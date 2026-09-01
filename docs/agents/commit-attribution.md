@@ -35,3 +35,6 @@ node scripts/co-author.mjs Cursor "Grok 4.6"
 - Do not use a personal or customer address.
 - If several agents touched the same commit, add one trailer per harness + model pair.
 - Human-only commits may omit the trailer.
+
+Push the branch over SSH as HumanMaxAI. Details: `docs/agents/git-identity.md`.
+

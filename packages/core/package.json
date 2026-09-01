@@ -15,9 +15,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test --experimental-strip-types src/index.test.ts"
+    "test": "node --test --experimental-strip-types src/*.test.ts"
   },
   "dependencies": {
-    "@humanmax/contracts": "0.0.0"
+    "@humanmax/contracts": "0.0.0",
+    "@humanmax/findings": "0.0.0"
   }
 }

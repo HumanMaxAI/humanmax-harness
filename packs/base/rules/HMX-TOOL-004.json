@@ -1,0 +1,14 @@
+{
+  "apiVersion": "humanmax.ai/rule/v1alpha1",
+  "kind": "HarnessRuleMetadata",
+  "id": "HMX-TOOL-004",
+  "version": "0.0.0",
+  "title": "Effectful tools require the action gateway",
+  "family": "tool",
+  "defaultSeverity": "high",
+  "appliesTo": ["Tool"],
+  "requiresEvidence": ["tool-declaration"],
+  "resultWhenMissing": "UNKNOWN",
+  "remediationClass": "review-required",
+  "controlRefs": ["base.effectful-action-gateway"]
+}
