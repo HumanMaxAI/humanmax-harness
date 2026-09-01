@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 ### Added
 
+- `@humanmax/contracts` exports `readCanonicalYaml` (bounded YAML subset; malformed input throws `YamlParseError`) and `packDigest` (pure, path-sorted `sha256:<hex>` over pack contents). Later lanes consume these; `parseSimpleYaml` is unchanged in this commit.
 - Preview gap review (`docs/reviews/2026-09-02-preview-gap-review.md`) measuring `main@07448fa` against design §20 gates: the create → run → check loop does not work while repository CI is green.
 - Execution plan (`docs/plans/2026-09-02-preview-green-loop.md`) for the green loop, including the 2026-09-02 decisions (publish to npm, SARIF in Preview, contracts-first YAML/digest).
 
