@@ -12,7 +12,13 @@ This is an execution plan. It does not amend the design.
 2. **SARIF.** In scope for this round. The `cli` lane emits `--format sarif` from the same finding set as JSON.
 3. **YAML and pack digest.** The `contracts` lane lands a hardened canonical YAML reader and a pure pack digest helper first, in isolation. `core` and `generator` consume them afterwards.
 
-## Wave 1 — parallel (in flight)
+## Status (2026-09-02)
+
+- **Wave 1:** merged to `main` (`ef4a6cf` … `7600a87`).
+- **Wave 2:** implemented on `main` after Wave 1 (real pack digest, YAML consumption, `generated-project` CI job). `npm test` and `npm run typecheck` pass locally.
+- **Wave 3:** blocked. Needs maintainer npm login, explicit publish approval, and launch blockers 2–4 if they must land before the first public tarball.
+
+## Wave 1 — parallel (merged)
 
 Write sets do not overlap except `CHANGELOG.md`. The coordinator resolves changelog collisions, then runs root `npm test` and `npm run typecheck`.
 
@@ -23,7 +29,7 @@ Write sets do not overlap except `CHANGELOG.md`. The coordinator resolves change
 | `cli` | `feat/cli-sarif-exit-codes` | `packages/cli/**` | G26 (SARIF), exit codes 3 and 4, real versions, non-swallowing `test` | `check --format json` and `--format sarif` on a fixture; broken project non-zero |
 | `docs` | `docs/preview-gap-review` | `docs/**` | Evidence and sequencing; no gate is closed by prose | `npm test` (includes `scripts/check-scaffold.mjs`) |
 
-## Wave 2 — blocked on Wave 1
+## Wave 2 — sequential after Wave 1 (done locally)
 
 | Lane | Depends on | Write set | Gates closed | Verify |
 |---|---|---|---|---|

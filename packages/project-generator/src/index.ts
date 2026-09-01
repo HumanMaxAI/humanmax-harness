@@ -11,4 +11,4 @@ export { planUpgrade } from "./upgrade.ts";
 export type { UpgradeAction, UpgradeFile, UpgradePlan } from "./upgrade.ts";
 export { readProjectSnapshot } from "./snapshot.ts";
 export type { ProjectSnapshot } from "./snapshot.ts";
-export { parseSimpleYaml } from "./yaml.ts";
+export { readCanonicalYaml as parseSimpleYaml } from "@humanmax/contracts";

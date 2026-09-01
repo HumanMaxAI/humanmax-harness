@@ -1,7 +1,9 @@
 import {
   isEffectful,
+  packDigest,
   validate,
   type Finding,
+  type PackContentEntry,
   type ResultState,
 } from "@humanmax/contracts";
 import { PREVIEW_RULES, makeFinding } from "@humanmax/findings";
@@ -10,6 +12,7 @@ export type EvaluationInput = {
   project?: unknown;
   tools?: unknown[];
   packLock?: unknown;
+  packEntries?: readonly PackContentEntry[];
   generatorLock?: {
     files?: Record<string, { class?: string; digest?: string }>;
   };
@@ -26,19 +29,22 @@ export type EvaluationSummary = {
 export type EvaluationResult = {
   findings: Finding[];
   summary: EvaluationSummary;
+  packTrustFailed: boolean;
 };
 
 export function evaluate(input: EvaluationInput): EvaluationResult {
-  const findings: Finding[] = [];
-  findings.push(projectFinding(input.project));
-  findings.push(packFinding(input.packLock));
+  const pack = packFinding(input.packLock, input.packEntries);
+  if (pack.result === "FAIL") {
+    return { findings: [pack], summary: summarise([pack]), packTrustFailed: true };
+  }
+  const findings: Finding[] = [projectFinding(input.project), pack];
   for (const tool of input.tools ?? []) {
     findings.push(toolFinding(tool));
   }
   if (input.generatorLock) {
     findings.push(generatorFinding(input.generatorLock, input.fileDigests));
   }
-  return { findings, summary: summarise(findings) };
+  return { findings, summary: summarise(findings), packTrustFailed: false };
 }
 
 export function summarise(findings: Finding[]): EvaluationSummary {
@@ -123,7 +129,10 @@ function projectFinding(project: unknown): Finding {
   });
 }
 
-function packFinding(packLock: unknown): Finding {
+function packFinding(
+  packLock: unknown,
+  packEntries: readonly PackContentEntry[] | undefined,
+): Finding {
   const subject = { type: "pack", id: "base" };
   const locations = [{ file: ".humanmax/packs.lock" }];
   if (packLock === undefined) {
@@ -175,6 +184,63 @@ function packFinding(packLock: unknown): Finding {
       remediation: {
         classification: "review-required",
         summary: "Lock the base pack by digest.",
+      },
+    });
+  }
+  if (!packEntries || packEntries.length === 0) {
+    return makeFinding({
+      ruleId: PREVIEW_RULES.packLock,
+      result: "UNKNOWN",
+      severity: "high",
+      confidence: "unassessed",
+      title: "Pack contents were not supplied",
+      message:
+        `base@${base.version} is locked at ${base.digest}, but no pack files were provided to recompute the digest. Absence of evidence is not a pass.`,
+      subject,
+      locations,
+      evidence: [{ type: "digest", ref: base.digest }],
+      remediation: {
+        classification: "review-required",
+        summary: "Provide the locked pack files before treating the digest as verified.",
+      },
+    });
+  }
+  let actual: string;
+  try {
+    actual = packDigest(packEntries);
+  } catch (error) {
+    return makeFinding({
+      ruleId: PREVIEW_RULES.packLock,
+      result: "FAIL",
+      severity: "high",
+      confidence: "deterministic",
+      title: "Pack contents cannot be digested",
+      message: error instanceof Error ? error.message : String(error),
+      subject,
+      locations,
+      remediation: {
+        classification: "review-required",
+        summary: "Restore a complete, path-sorted pack. Do not continue on a broken digest.",
+      },
+    });
+  }
+  if (actual !== base.digest) {
+    return makeFinding({
+      ruleId: PREVIEW_RULES.packLock,
+      result: "FAIL",
+      severity: "high",
+      confidence: "deterministic",
+      title: "Pack digest does not match the lock",
+      message: `Locked ${base.digest} does not match computed ${actual}. Evaluation stops.`,
+      subject,
+      locations,
+      evidence: [
+        { type: "digest", ref: base.digest },
+        { type: "digest", ref: actual },
+      ],
+      remediation: {
+        classification: "review-required",
+        summary: "Restore the locked pack or update the lock through an explicit pack update.",
       },
     });
   }
