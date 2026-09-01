@@ -8,16 +8,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 ### Added
 
-- `@humanmax/contracts` exports `readCanonicalYaml` (bounded YAML subset; malformed input throws `YamlParseError`) and `packDigest` (pure, path-sorted `sha256:<hex>` over pack contents). Later lanes consume these; `parseSimpleYaml` is unchanged in this commit.
+- `@humanmax/contracts` exports `readCanonicalYaml` (bounded YAML subset; malformed input throws `YamlParseError`) and `packDigest` (pure, path-sorted `sha256:<hex>` over pack contents). `parseSimpleYaml` is now that reader.
 - `humanmax check` and `humanmax generate --check` accept `--format sarif` (SARIF 2.1.0 from the same finding set as JSON). `FAIL`, `UNKNOWN`, and `NEEDS_HUMAN_REVIEW` never map to SARIF `kind: pass`.
 - Deterministic `tool-agent` file-tree snapshot test (paths, ownership, content digests).
 - Real `npm install` + `npm test` + `humanmax doctor` coverage for a generated project; the previous test hand-linked packages and missed the install path.
 - Preview gap review (`docs/reviews/2026-09-02-preview-gap-review.md`) measuring `main@07448fa` against design §20 gates: the create → run → check loop does not work while repository CI is green.
-- Execution plan (`docs/plans/2026-09-02-preview-green-loop.md`) for the green loop, including the 2026-09-02 decisions (publish to npm, SARIF in Preview, contracts-first YAML/digest).
+- Execution plan (`docs/plans/2026-09-02-preview-green-loop.md`) for the green loop, including the 2026-09-02 decisions (publish to npm, SARIF in Preview, contracts-first YAML/digest). Wave 1 is merged; Wave 2 is implemented locally; Wave 3 stays blocked on npm publish.
+- Generated projects copy `packs/base` into `.humanmax/packs/base` and lock a real `packDigest`. Core recomputes the digest; a mismatch stops evaluation and the CLI exits 3.
+- Repository CI job `generated-project` creates, installs, tests, and checks a project from this checkout.
 
 ### Changed
 
 - CLI exit codes: usage/config → 2, pack-lock schema trust → 3, unexpected execution failure → 4. Findings/tests still → 1.
+- `readProjectSnapshot` parses declarations with `readCanonicalYaml`. Malformed YAML throws rather than returning a partial object.
 - `CliResponse.versions` is read from installed package manifests instead of hardcoded `0.0.0`.
 - `humanmax test` reports the child runner's result as `PASS`/`FAIL`/`UNKNOWN` and never marks a non-zero child as `completed`.
 - Generated GitHub workflow is `workflow_dispatch` only until `@humanmax/*` is published. A hosted runner cannot resolve local `file:` paths; Harness CI status on GitHub is `UNKNOWN`, not a green check for checks that never ran.

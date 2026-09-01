@@ -19,3 +19,25 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+
+  generated-project:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Create, install, test, and check a generated project
+        run: |
+          dest="$RUNNER_TEMP/demo-agent"
+          node --experimental-strip-types packages/create-humanmax-agent/src/cli.ts "$dest"
+          cd "$dest"
+          npm install
+          npm test
+          npm run humanmax -- doctor --format json
+          npm run humanmax -- check --format json
+          npm run humanmax -- generate --check --format json

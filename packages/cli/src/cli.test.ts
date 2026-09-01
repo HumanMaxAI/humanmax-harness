@@ -141,6 +141,22 @@ test("sarif is refused for commands that produce no findings", async () => {
   assert.equal(result.status, EXIT_CODES.usage);
 });
 
+test("a pack digest mismatch exits 3 after evaluation stops", async () => {
+  const dest = await project();
+  const path = join(dest, ".humanmax/packs.lock");
+  const current = await readFile(path, "utf8");
+  await writeFile(
+    path,
+    current.replace(/digest: sha256:[0-9a-f]+/, `digest: sha256:${"0".repeat(64)}`),
+  );
+  const result = run(["check", "--format", "json"], dest);
+  assert.equal(result.status, EXIT_CODES.packTrust);
+  const body = JSON.parse(result.stdout);
+  assert.equal(body.results.length, 1);
+  assert.equal(body.results[0].ruleId, "HMX-PACK-001");
+  assert.equal(body.results[0].result, "FAIL");
+});
+
 test("an unsupported pack-lock schema is exit 3, not a finding", async () => {
   const dest = await project();
   const path = join(dest, ".humanmax/packs.lock");

@@ -7,6 +7,7 @@ import {
   EXIT_CODES,
   PACK_LOCK_API_VERSION,
   PREVIEW_CLI_COMMANDS,
+  readCanonicalYaml,
   validate,
   type CliResponse,
   type EffectClass,
@@ -16,7 +17,6 @@ import { evaluate } from "@humanmax/core";
 import {
   addEval,
   addTool,
-  parseSimpleYaml,
   planUpgrade,
   readProjectSnapshot,
 } from "@humanmax/project-generator";
@@ -98,6 +98,9 @@ export async function runCli(argv: string[], io: Io): Promise<number> {
     assertPackLockSupported(root);
     const response = await dispatch(command, positionals.slice(1), flags, root, argv);
     print(io, response, format);
+    if (hasPackTrustFailure(response)) {
+      return EXIT_CODES.packTrust;
+    }
     return response.status === "completed" ? EXIT_CODES.ok : EXIT_CODES.failed;
   } catch (error) {
     io.stderr.write(`${errorMessage(error)}\n`);
@@ -341,7 +344,7 @@ function assertPackLockSupported(root: string): void {
   }
   let parsed: unknown;
   try {
-    parsed = parseSimpleYaml(readFileSync(path, "utf8"));
+    parsed = readCanonicalYaml(readFileSync(path, "utf8"), { source: path });
   } catch (error) {
     throw packTrustError(
       `Cannot read ${PACK_LOCK_PATH}, so pack trust cannot be established: ${errorMessage(error)}`,
@@ -356,6 +359,18 @@ function assertPackLockSupported(root: string): void {
       `${PACK_LOCK_PATH} declares ${apiVersion}; this CLI can only verify ${PACK_LOCK_API_VERSION}.`,
     );
   }
+}
+
+function hasPackTrustFailure(response: CliResponse): boolean {
+  return response.results.some(
+    (item) =>
+      typeof item === "object" &&
+      item !== null &&
+      "ruleId" in item &&
+      item.ruleId === "HMX-PACK-001" &&
+      "result" in item &&
+      item.result === "FAIL",
+  );
 }
 
 function parseFormat(argv: string[], command: string): OutputFormat {

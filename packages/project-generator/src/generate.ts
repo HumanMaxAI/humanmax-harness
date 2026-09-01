@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import type { FileOwnershipClass } from "@humanmax/contracts";
 import { harnessDependencies } from "./dependencies.ts";
+import { generatedPackFiles } from "./pack-lock.ts";
 
 export const PREVIEW_TEMPLATE = "tool-agent" as const;
 export const PREVIEW_PROFILE = "base" as const;
@@ -96,6 +97,7 @@ function renderFiles(
   const lockFiles: Record<string, { class: FileOwnershipClass; digest: string }> =
     {};
 
+  const pack = generatedPackFiles();
   const files: GenerateFile[] = [
     file("package.json", "mergeable", packageJson(name, destination)),
     file("tsconfig.json", "mergeable", tsconfig()),
@@ -104,7 +106,8 @@ function renderFiles(
     file(".gitignore", "generated", gitignore()),
     file(".env.example", "generated", "# No provider credentials required for the fixture run.\n"),
     file(".humanmax/project.yaml", "canonical", projectYaml(name, options)),
-    file(".humanmax/packs.lock", "canonical", packsLock()),
+    file(".humanmax/packs.lock", "canonical", packsLock(pack.digest)),
+    ...pack.files,
     file(".humanmax/agents/default.agent.yaml", "canonical", agentYaml()),
     file(
       ".humanmax/tools/knowledge-read.tool.yaml",
@@ -311,13 +314,13 @@ spec:
 `;
 }
 
-function packsLock(): string {
+function packsLock(digest: string): string {
   return `apiVersion: humanmax.ai/pack-lock/v1alpha1
 kind: PackLock
 packs:
   - id: base
     version: 0.0.0
-    digest: sha256:preview-unsigned
+    digest: ${digest}
     publisherKeyId: humanmax-community-2026
 `;
 }
