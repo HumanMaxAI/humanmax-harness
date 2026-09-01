@@ -72,6 +72,13 @@ export type {
 
 export { findingId } from "./finding-id.ts";
 export { applyException, validate } from "./validate.ts";
+
+export { YAML_READ_LIMITS, YamlParseError, readCanonicalYaml } from "./yaml.ts";
+export type { YamlErrorCode, YamlReadLimits, YamlReadOptions } from "./yaml.ts";
+
+export { PACK_DIGEST_SCHEME, PackDigestError, packDigest } from "./pack-digest.ts";
+export type { PackContentEntry, PackDigestErrorCode } from "./pack-digest.ts";
+
 export {
   approvedException,
   failFinding,
