@@ -9,8 +9,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 ### Added
 
 - `@humanmax/contracts` exports `readCanonicalYaml` (bounded YAML subset; malformed input throws `YamlParseError`) and `packDigest` (pure, path-sorted `sha256:<hex>` over pack contents). Later lanes consume these; `parseSimpleYaml` is unchanged in this commit.
+- Deterministic `tool-agent` file-tree snapshot test (paths, ownership, content digests).
+- Real `npm install` + `npm test` + `humanmax doctor` coverage for a generated project; the previous test hand-linked packages and missed the install path.
 - Preview gap review (`docs/reviews/2026-09-02-preview-gap-review.md`) measuring `main@07448fa` against design §20 gates: the create → run → check loop does not work while repository CI is green.
 - Execution plan (`docs/plans/2026-09-02-preview-green-loop.md`) for the green loop, including the 2026-09-02 decisions (publish to npm, SARIF in Preview, contracts-first YAML/digest).
+
+### Changed
+
+- Generated GitHub workflow is `workflow_dispatch` only until `@humanmax/*` is published. A hosted runner cannot resolve local `file:` paths; Harness CI status on GitHub is `UNKNOWN`, not a green check for checks that never ran.
+
+### Fixed
+
+- Generated `file:` dependencies now resolve through real paths, so a macOS `/var` → `/private/var` hop no longer produces dangling `@humanmax/*` links. `npm install` in a generated project creates `node_modules/.bin/humanmax` and `npm test` can run.
 
 ## [0.0.0] - 2026-09-01
 
