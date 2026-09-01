@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-02
+
+### Added
+
+- `humanmax check` and `humanmax generate --check` accept `--format sarif` (SARIF 2.1.0 from the same finding set as JSON). `FAIL`, `UNKNOWN`, and `NEEDS_HUMAN_REVIEW` never map to SARIF `kind: pass`.
+
+### Changed
+
+- CLI exit codes: usage/config → 2, pack-lock schema trust → 3, unexpected execution failure → 4. Findings/tests still → 1.
+- `CliResponse.versions` is read from installed package manifests instead of hardcoded `0.0.0`.
+- `humanmax test` reports the child runner's result as `PASS`/`FAIL`/`UNKNOWN` and never marks a non-zero child as `completed`.
+
 ## [0.0.0] - 2026-09-01
 
 ### Added

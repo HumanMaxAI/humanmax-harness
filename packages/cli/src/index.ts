@@ -5,22 +5,49 @@ import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
   EXIT_CODES,
+  PACK_LOCK_API_VERSION,
   PREVIEW_CLI_COMMANDS,
   validate,
   type CliResponse,
   type EffectClass,
+  type ResultState,
 } from "@humanmax/contracts";
 import { evaluate } from "@humanmax/core";
 import {
   addEval,
   addTool,
+  parseSimpleYaml,
   planUpgrade,
   readProjectSnapshot,
 } from "@humanmax/project-generator";
+import {
+  errorMessage,
+  exitCodeForError,
+  internalError,
+  packTrustError,
+  usageError,
+} from "./errors.ts";
+import { toSarif } from "./sarif.ts";
+import { packageVersions } from "./versions.ts";
 
 export const EXIT_USAGE = EXIT_CODES.usage;
 
 export { PREVIEW_CLI_COMMANDS };
+export { CliError, exitCodeForError } from "./errors.ts";
+export { sarifKind, sarifLevel, toSarif } from "./sarif.ts";
+export { packageVersions } from "./versions.ts";
+
+export const OUTPUT_FORMATS = ["terminal", "json", "sarif"] as const;
+export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
+
+/**
+ * Only finding-producing commands may emit SARIF. An empty SARIF run from a
+ * command that produces no findings would read as a clean scan.
+ */
+export const SARIF_COMMANDS = ["check", "generate"] as const;
+
+const PACK_LOCK_PATH = ".humanmax/packs.lock";
+const TAIL_LINES = 20;
 
 export function previewCommands(): readonly string[] {
   return PREVIEW_CLI_COMMANDS;
@@ -30,14 +57,17 @@ const usage = `Usage: humanmax <command>
 
 Preview commands: ${PREVIEW_CLI_COMMANDS.join(", ")}
 
-  humanmax doctor [--format json]
-  humanmax check [--format json]
-  humanmax generate --check [--format json]
-  humanmax upgrade --dry-run [--format json]
+  humanmax doctor [--format terminal|json]
+  humanmax check [--format terminal|json|sarif]
+  humanmax generate --check [--format terminal|json|sarif]
+  humanmax upgrade --dry-run [--format terminal|json]
   humanmax add tool <id> --effect <class> [--dry-run]
   humanmax add eval <id> [--dry-run]
-  humanmax test [--format json]
-  humanmax dev [--format json]
+  humanmax test [--format terminal|json]
+  humanmax dev [--format terminal|json]
+
+Exit codes: 0 completed, 1 findings or tests met the failure threshold,
+2 usage or configuration error, 3 pack trust error, 4 internal failure.
 
 Preview does not apply upgrades, generate sg-core, or claim production enforcement.
 `;
@@ -60,18 +90,18 @@ export async function runCli(argv: string[], io: Io): Promise<number> {
     return EXIT_CODES.usage;
   }
   try {
+    const format = parseFormat(argv, command);
     if (command === "upgrade" && (flags.has("--apply") || !flags.has("--dry-run"))) {
-      io.stderr.write("Preview only supports humanmax upgrade --dry-run.\n");
-      return EXIT_CODES.usage;
+      throw usageError("Preview only supports humanmax upgrade --dry-run.");
     }
     const root = findProjectRoot(io.cwd);
-    const format = flagValue(argv, "--format") ?? "terminal";
+    assertPackLockSupported(root);
     const response = await dispatch(command, positionals.slice(1), flags, root, argv);
     print(io, response, format);
     return response.status === "completed" ? EXIT_CODES.ok : EXIT_CODES.failed;
   } catch (error) {
-    io.stderr.write(`${error instanceof Error ? error.message : error}\n`);
-    return EXIT_CODES.failed;
+    io.stderr.write(`${errorMessage(error)}\n`);
+    return exitCodeForError(error);
   }
 }
 
@@ -90,7 +120,7 @@ async function dispatch(
   }
   if (command === "generate") {
     if (!flags.has("--check")) {
-      throw new Error("Preview generate only supports --check");
+      throw usageError("Preview generate only supports --check");
     }
     return runCheck(root, "generate --check");
   }
@@ -107,11 +137,7 @@ async function dispatch(
     return runAdd(root, rest, flags, argv);
   }
   if (command === "test") {
-    const spawned = spawnSync("npm", ["test"], { cwd: root, encoding: "utf8" });
-    const status = spawned.status === 0 ? "completed" : "failed";
-    return respond("test", root, status, [
-      { exitCode: spawned.status, stdout: spawned.stdout, stderr: spawned.stderr },
-    ]);
+    return runProjectTests(root);
   }
   if (command === "dev") {
     const moduleUrl = pathToFileURL(join(root, "src/index.ts")).href;
@@ -119,12 +145,12 @@ async function dispatch(
       runFixture?: () => Promise<unknown>;
     };
     if (!mod.runFixture) {
-      throw new Error("Generated project does not export runFixture()");
+      throw usageError("Generated project does not export runFixture()");
     }
     const result = await mod.runFixture();
     return respond("dev", root, "completed", [result]);
   }
-  throw new Error(`Unsupported command: ${command}`);
+  throw usageError(`Unsupported command: ${command}`);
 }
 
 function runAdd(
@@ -136,7 +162,9 @@ function runAdd(
   const kind = rest[0];
   const id = rest[1];
   if ((kind !== "tool" && kind !== "eval") || !id) {
-    throw new Error("Usage: humanmax add tool <id> --effect <class> | humanmax add eval <id>");
+    throw usageError(
+      "Usage: humanmax add tool <id> --effect <class> | humanmax add eval <id>",
+    );
   }
   if (kind === "eval") {
     const plan = addEval({ destination: root, id, dryRun: flags.has("--dry-run") });
@@ -144,7 +172,7 @@ function runAdd(
   }
   const effect = flagValue(argv, "--effect") as EffectClass | undefined;
   if (!effect) {
-    throw new Error("humanmax add tool requires --effect");
+    throw usageError("humanmax add tool requires --effect");
   }
   const plan = addTool({
     destination: root,
@@ -170,6 +198,7 @@ function doctor(root: string): CliResponse {
       profiles: project?.spec?.profiles ?? [],
       productionEnforcement: project?.spec?.runtime?.productionEnforcement ?? "unknown",
       enforcementAdapter: project?.spec?.runtime?.enforcementAdapter ?? "unknown",
+      versions: packageVersions(),
     },
   ]);
 }
@@ -193,6 +222,40 @@ function runCheck(root: string, command: string): CliResponse {
   );
 }
 
+function runProjectTests(root: string): CliResponse {
+  const spawned = spawnSync("npm", ["test"], { cwd: root, encoding: "utf8" });
+  if (spawned.error) {
+    throw internalError(
+      `Could not start the project test runner: ${spawned.error.message}`,
+    );
+  }
+  const exitCode = typeof spawned.status === "number" ? spawned.status : null;
+  const signal = spawned.signal ?? null;
+  const result: ResultState =
+    exitCode === 0 ? "PASS" : exitCode === null ? "UNKNOWN" : "FAIL";
+  return respond(
+    "test",
+    root,
+    result === "PASS" ? "completed" : "failed",
+    [
+      {
+        runner: "npm test",
+        result,
+        exitCode,
+        signal,
+        stdoutTail: tail(spawned.stdout),
+        stderrTail: tail(spawned.stderr),
+      },
+    ],
+    {
+      pass: result === "PASS" ? 1 : 0,
+      fail: result === "FAIL" ? 1 : 0,
+      unknown: result === "UNKNOWN" ? 1 : 0,
+      needsHumanReview: 0,
+    },
+  );
+}
+
 function respond(
   command: string,
   root: string,
@@ -201,13 +264,13 @@ function respond(
   summary?: CliResponse["summary"],
 ): CliResponse {
   const projectYaml = join(root, ".humanmax/project.yaml");
-  const packLock = join(root, ".humanmax/packs.lock");
+  const packLock = join(root, PACK_LOCK_PATH);
   const response: CliResponse = {
     apiVersion: "humanmax.ai/cli-response/v1alpha1",
     kind: "CliResponse",
     command,
     status,
-    versions: { cli: "0.0.0", core: "0.0.0", contracts: "0.0.0" },
+    versions: packageVersions(),
     project: {
       root,
       configDigest: digestFile(projectYaml),
@@ -229,19 +292,25 @@ function respond(
   };
   const checked = validate("CliResponse", response);
   if (!checked.ok) {
-    throw new Error(checked.errors.join("; "));
+    throw internalError(checked.errors.join("; "));
   }
   return response;
 }
 
-function print(io: Io, response: CliResponse, format: string): void {
+function print(io: Io, response: CliResponse, format: OutputFormat): void {
   if (format === "json") {
     io.stdout.write(`${JSON.stringify(response)}\n`);
     return;
   }
-  io.stdout.write(
-    `${response.command}: ${response.status} pass=${response.summary.pass} fail=${response.summary.fail} unknown=${response.summary.unknown}\n`,
-  );
+  if (format === "sarif") {
+    io.stdout.write(`${JSON.stringify(toSarif(response))}\n`);
+    return;
+  }
+  const lines = [
+    `${response.command}: ${response.status} pass=${response.summary.pass} fail=${response.summary.fail} unknown=${response.summary.unknown} needsHumanReview=${response.summary.needsHumanReview}`,
+    ...response.coverage.limitations.map((limitation) => `  limitation: ${limitation}`),
+  ];
+  io.stdout.write(`${lines.join("\n")}\n`);
 }
 
 export function findProjectRoot(start: string): string {
@@ -252,10 +321,59 @@ export function findProjectRoot(start: string): string {
     }
     const parent = dirname(dir);
     if (parent === dir) {
-      throw new Error("Not a HumanMax generated project (missing .humanmax/project.yaml)");
+      throw usageError(
+        "Not a HumanMax generated project (missing .humanmax/project.yaml)",
+      );
     }
     dir = parent;
   }
+}
+
+/**
+ * The CLI cannot verify a pack lock written against a schema it does not know,
+ * so an unsupported lock is a trust failure rather than a finding. Lock content
+ * itself stays a Core rule.
+ */
+function assertPackLockSupported(root: string): void {
+  const path = join(root, PACK_LOCK_PATH);
+  if (!existsSync(path)) {
+    return;
+  }
+  let parsed: unknown;
+  try {
+    parsed = parseSimpleYaml(readFileSync(path, "utf8"));
+  } catch (error) {
+    throw packTrustError(
+      `Cannot read ${PACK_LOCK_PATH}, so pack trust cannot be established: ${errorMessage(error)}`,
+    );
+  }
+  const apiVersion =
+    typeof parsed === "object" && parsed !== null && "apiVersion" in parsed
+      ? parsed.apiVersion
+      : undefined;
+  if (typeof apiVersion === "string" && apiVersion !== PACK_LOCK_API_VERSION) {
+    throw packTrustError(
+      `${PACK_LOCK_PATH} declares ${apiVersion}; this CLI can only verify ${PACK_LOCK_API_VERSION}.`,
+    );
+  }
+}
+
+function parseFormat(argv: string[], command: string): OutputFormat {
+  const index = argv.indexOf("--format");
+  if (index === -1) {
+    return "terminal";
+  }
+  const value = argv[index + 1];
+  if (!value || !(OUTPUT_FORMATS as readonly string[]).includes(value)) {
+    throw usageError(`--format requires one of: ${OUTPUT_FORMATS.join(", ")}`);
+  }
+  const format = value as OutputFormat;
+  if (format === "sarif" && !(SARIF_COMMANDS as readonly string[]).includes(command)) {
+    throw usageError(
+      `--format sarif is only available for: ${SARIF_COMMANDS.join(", ")}. Other commands produce no findings, and an empty SARIF run would read as a clean scan.`,
+    );
+  }
+  return format;
 }
 
 function parseArgs(argv: string[]): { flags: Set<string>; positionals: string[] } {
@@ -289,4 +407,29 @@ function digestFile(path: string): string {
     return "sha256:missing";
   }
   return `sha256:${createHash("sha256").update(readFileSync(path)).digest("hex")}`;
+}
+
+const OSC_SEQUENCE = /\u001B\][\s\S]*?(?:\u0007|\u001B\\)/g;
+const CSI_SEQUENCE = /\u001B\[[0-?]*[ -\/]*[@-~]/g;
+const OTHER_ESCAPE = /\u001B[@-Z\\-_]/g;
+const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u009B]/g;
+
+/** Child output reaches the JSON envelope, which must stay free of ANSI text. */
+export function stripAnsi(text: string): string {
+  return text
+    .replace(OSC_SEQUENCE, "")
+    .replace(CSI_SEQUENCE, "")
+    .replace(OTHER_ESCAPE, "")
+    .replace(CONTROL_CHARACTERS, "");
+}
+
+function tail(output: string | null | undefined): string[] {
+  if (!output) {
+    return [];
+  }
+  const lines = stripAnsi(output)
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => line !== "");
+  return lines.slice(-TAIL_LINES);
 }
