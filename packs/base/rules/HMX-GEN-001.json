@@ -1,0 +1,14 @@
+{
+  "apiVersion": "humanmax.ai/rule/v1alpha1",
+  "kind": "HarnessRuleMetadata",
+  "id": "HMX-GEN-001",
+  "version": "0.0.0",
+  "title": "Generator lock matches current files",
+  "family": "generator",
+  "defaultSeverity": "medium",
+  "appliesTo": ["generator.lock"],
+  "requiresEvidence": ["file-digests"],
+  "resultWhenMissing": "UNKNOWN",
+  "remediationClass": "review-required",
+  "controlRefs": ["base.generator-lock"]
+}

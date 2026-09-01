@@ -1,11 +1,7 @@
-import { EXIT_USAGE, previewCommands } from "./index.ts";
+import { runCli } from "./index.ts";
 
-const usage = `humanmax <command>
-
-Preview commands: ${previewCommands().join(", ")}
-
-This binary is a scaffold stub. Implementation has not landed.
-`;
-
-process.stderr.write(usage);
-process.exitCode = EXIT_USAGE;
+process.exitCode = await runCli(process.argv.slice(2), {
+  cwd: process.cwd(),
+  stdout: process.stdout,
+  stderr: process.stderr,
+});

@@ -1,0 +1,14 @@
+{
+  "apiVersion": "humanmax.ai/rule/v1alpha1",
+  "kind": "HarnessRuleMetadata",
+  "id": "HMX-PROJ-001",
+  "version": "0.0.0",
+  "title": "Production enforcement stays unconfigured",
+  "family": "project",
+  "defaultSeverity": "high",
+  "appliesTo": ["HarnessProject"],
+  "requiresEvidence": ["project-declaration"],
+  "resultWhenMissing": "UNKNOWN",
+  "remediationClass": "review-required",
+  "controlRefs": ["base.production-enforcement"]
+}

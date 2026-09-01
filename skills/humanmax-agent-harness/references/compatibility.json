@@ -1,0 +1,6 @@
+{
+  "skillVersion": "0.0.0",
+  "cliContract": "0.0.0",
+  "findingSchema": "humanmax.ai/finding/v1alpha1",
+  "cliResponseSchema": "humanmax.ai/cli-response/v1alpha1"
+}
