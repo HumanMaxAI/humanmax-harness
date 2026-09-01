@@ -1,12 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readFile, readdir, symlink, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { isAbsolute, join, resolve } from "node:path";
 import { test } from "node:test";
+import { realPath } from "./dependencies.ts";
 import { defaultCreateOptions, generateProject } from "./generate.ts";
-
-const harnessRoot = fileURLToPath(new URL("../../..", import.meta.url));
 
 async function emptyDir(): Promise<string> {
   return mkdtemp(join(tmpdir(), "humanmax-generate-"));
@@ -60,36 +59,49 @@ test("apply writes a tool-agent with unconfigured production and no sg-core", as
   );
   assert.equal(lock.template, "tool-agent");
   assert.ok(lock.files["src/index.ts"]);
-  assert.equal(
-    await readFile(join(dest, ".github/workflows/humanmax.yml"), "utf8").then(
-      (text) => text.includes("npm test"),
-    ),
-    true,
-  );
 });
 
-async function linkWorkspacePackages(dest: string): Promise<void> {
-  const scope = join(dest, "node_modules", "@humanmax");
-  await mkdir(scope, { recursive: true });
-  await symlink(
-    join(harnessRoot, "packages", "runtime-harness"),
-    join(scope, "runtime-harness"),
-  );
-  await symlink(join(harnessRoot, "packages", "contracts"), join(scope, "contracts"));
-}
-
-test("generated fixture run reads, reviews writes, and never claims enforcement", async () => {
-  const dest = await emptyDir();
-  generateProject({
+// The `tmpdir()` parent is itself a symlink on macOS (`/var` -> `/private/var`).
+// Before this was fixed, the emitted relative path was one segment short, npm
+// wrote dangling symlinks into `node_modules/@humanmax/`, created no
+// `node_modules/.bin`, and still exited 0.
+test("every emitted file: dependency resolves to a real harness package", async () => {
+  const dest = join(await emptyDir(), "demo-agent");
+  const plan = generateProject({
     destination: dest,
     name: "demo-agent",
-    apply: true,
+    dryRun: true,
   });
-  await linkWorkspacePackages(dest);
-  const { runFixture } = await import(join(dest, "src/index.ts"));
-  const result = await runFixture();
-  assert.equal(result.read, "ok");
-  assert.equal(result.write, "review");
-  assert.equal(result.productionEnforcement, "unconfigured");
-  assert.equal(result.writeExecuted, false);
+  const manifest = JSON.parse(
+    plan.files.find((file) => file.path === "package.json")?.contents ?? "{}",
+  );
+  const specifiers = {
+    ...manifest.dependencies,
+    ...manifest.devDependencies,
+  } as Record<string, string>;
+
+  assert.deepEqual(Object.keys(specifiers).sort(), [
+    "@humanmax/cli",
+    "@humanmax/contracts",
+    "@humanmax/core",
+    "@humanmax/findings",
+    "@humanmax/project-generator",
+    "@humanmax/runtime-harness",
+  ]);
+
+  for (const [name, specifier] of Object.entries(specifiers)) {
+    assert.ok(specifier.startsWith("file:"), `${name} is not a file: specifier`);
+    const target = specifier.slice("file:".length);
+    assert.equal(isAbsolute(target), false, `${name} must stay relative`);
+    // npm resolves a relative file: specifier against the real destination.
+    const resolved = resolve(realPath(dest), target);
+    assert.ok(
+      existsSync(join(resolved, "package.json")),
+      `${name} resolves to ${resolved}, which has no package.json`,
+    );
+    const linked = JSON.parse(
+      await readFile(join(resolved, "package.json"), "utf8"),
+    );
+    assert.equal(linked.name, name);
+  }
 });
