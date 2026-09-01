@@ -1,0 +1,15 @@
+---
+description: Commit and push this repo with the HumanMaxAI SSH account
+alwaysApply: true
+---
+
+# Git identity — HumanMaxAI account
+
+When work is complete, **commit and push**. Do not leave a finished lane uncommitted.
+
+- **Push over SSH as HumanMaxAI**, never via `gh` HTTPS or the `billrain` fork.
+- Origin must be `git@github.com-hm:HumanMaxAI/humanmax-harness.git` (SSH host `github.com-hm`, key `~/.ssh/id_ed25519_hm`).
+- Confirm with `ssh -T git@github.com-hm` → `Hi HumanMaxAI!`
+- `git push -u origin HEAD`
+- Do not change `git config`. Do not `gh pr create` as billrain (read-only on the org). Ignore remote `fork`.
+- Agent commits still need the Co-authored-by trailer from `node scripts/co-author.mjs`.
