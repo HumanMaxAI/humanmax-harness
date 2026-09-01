@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [0.0.0] - 2026-09-01
+
+### Added
+
+- Preview project generator for TypeScript `tool-agent` + `base`: dry-run plan, refuse non-empty destinations without `apply`, and write a runnable fixture (`runFixture`) that reads, reviews writes, and keeps `productionEnforcement: unconfigured`.
+- `create-humanmax-agent <dir> --defaults` CLI that delegates to the generator (`--dry-run`, `--apply`). Preview does not emit `sg-core`.
+- Generator `add tool` / `add eval` change sets and `upgrade --dry-run` ownership plans (no apply). Generated projects pin `@humanmax/cli` and run `generate --check` plus `check` in GitHub Actions.
+- Deterministic Core evaluation for production-enforcement, gateway coverage, pack digest lock, and generator-lock integrity. Missing evidence is `UNKNOWN`, never `PASS`.
+- Declarative `base` pack rule metadata (`packs/base/rules`) and finding helpers in `@humanmax/findings`.
+- Preview `humanmax` CLI: `dev`, `add`, `generate --check`, `upgrade --dry-run`, `test`, `doctor`, thin `check`, with JSON `CliResponse` output.
+- Canonical Skill that only instructs the project-pinned CLI JSON contract.
+
 ## [0.0.0] - 2026-08-30
 
 ### Added

@@ -1,0 +1,14 @@
+{
+  "apiVersion": "humanmax.ai/rule/v1alpha1",
+  "kind": "HarnessRuleMetadata",
+  "id": "HMX-PACK-001",
+  "version": "0.0.0",
+  "title": "Base pack is digest-locked",
+  "family": "pack",
+  "defaultSeverity": "medium",
+  "appliesTo": ["PackLock"],
+  "requiresEvidence": ["pack-lock"],
+  "resultWhenMissing": "UNKNOWN",
+  "remediationClass": "review-required",
+  "controlRefs": ["base.pack-digest"]
+}
