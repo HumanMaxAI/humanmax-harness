@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { existsSync, mkdirSync, readdirSync, realpathSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { FileOwnershipClass } from "@humanmax/contracts";
 
@@ -43,7 +43,9 @@ export type GenerateRequest = {
   options?: Partial<CreateOptions>;
 };
 
-const harnessRoot = resolve(fileURLToPath(new URL("../../..", import.meta.url)));
+const harnessRoot = realpathSync(
+  resolve(fileURLToPath(new URL("../../..", import.meta.url))),
+);
 
 export function generateProject(request: GenerateRequest): GeneratePlan {
   const options = { ...defaultCreateOptions(), ...request.options };
@@ -170,10 +172,8 @@ function file(
   return { path, ownership, contents };
 }
 
-function fileDep(destination: string, packageName: string): string {
-  const target = join(harnessRoot, "packages", packageName);
-  const rel = relative(destination, target);
-  return `file:${rel.startsWith(".") ? rel : `./${rel}`}`;
+function fileDep(_destination: string, packageName: string): string {
+  return `file:${join(harnessRoot, "packages", packageName)}`;
 }
 
 export function fileDigest(contents: string): string {
@@ -206,7 +206,8 @@ function packageJson(
       scripts: {
         start: "node --experimental-strip-types src/index.ts",
         test: "node --test --experimental-strip-types tests/*.test.ts",
-        humanmax: "humanmax",
+        humanmax:
+          "node --experimental-strip-types ./node_modules/@humanmax/cli/src/cli.ts",
       },
       dependencies: {
         "@humanmax/contracts": contractsDep,

@@ -1,9 +1,9 @@
 # `create-humanmax-agent`
 
-Bootstrap package for `npm create humanmax-agent`. Delegates generation to `@humanmax/project-generator`.
+Bootstrap package for `npm create humanmax-agent` once published. Until then, run it from this clone:
 
 ```bash
-npx create-humanmax-agent my-agent --defaults
+node --experimental-strip-types packages/create-humanmax-agent/src/cli.ts my-agent --defaults
 npx create-humanmax-agent my-agent --defaults --dry-run
 ```
 

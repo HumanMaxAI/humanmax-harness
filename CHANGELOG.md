@@ -19,6 +19,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 ### Changed
 
 - Agent git identity: commit and push harness work over SSH as HumanMaxAI (`docs/agents/git-identity.md`). Do not use the personal `billrain` fork or `gh` HTTPS.
+- Root README documents the clone-based Preview create path. Packages are not on npm yet.
+
+### Fixed
+
+- Generated `file:` dependencies use absolute paths so `npm install` and `npm test` work when the project is created under `/tmp` on macOS.
 
 ## [0.0.0] - 2026-08-30
 
