@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-02
+
+### Fixed
+
+- Generated `file:` dependencies now resolve through real paths, so a macOS `/var` → `/private/var` hop no longer produces dangling `@humanmax/*` links. `npm install` in a generated project creates `node_modules/.bin/humanmax` and `npm test` can run.
+
+### Added
+
+- Deterministic `tool-agent` file-tree snapshot test (paths, ownership, content digests).
+- Real `npm install` + `npm test` + `humanmax doctor` coverage for a generated project; the previous test hand-linked packages and missed the install path.
+
+### Changed
+
+- Generated GitHub workflow is `workflow_dispatch` only until `@humanmax/*` is published. A hosted runner cannot resolve local `file:` paths; Harness CI status on GitHub is `UNKNOWN`, not a green check for checks that never ran.
+
 ## [0.0.0] - 2026-09-01
 
 ### Added
