@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 ### Added
 
-- Internal AI-native SDLC adapter for this repository: dated `*-intent.md` proto-specs under `docs/plans/`, plan-before-code, verify-before-done, and PR review passes in `docs/agents/pr-review.md`. Operating note: `docs/agents/2026-09-02-ai-native-sdlc.md`. Does not expand Preview or generate customer intent trees.
+- Wave 4 plan for remaining Preview P0 gates that an agent can close without npm credentials (`docs/plans/2026-09-02-mvp-wave-4.md`). First slice is `humanmax add tool` documentation (G10). Does not publish packages or expand Preview.
 - First public npm versions (`0.1.0`) emit compiled JavaScript and `.d.ts` to `dist/`. Bins are `dist/cli.js` with a Node shebang. `@humanmax/project-generator` embeds `packs/` at pack time so a published generator can still lock `base`.
 - Convenience package `humanmax` re-exports the `@humanmax/cli` bin so the unscoped name is reserved.
 - `@humanmax/contracts` exports `readCanonicalYaml` (bounded YAML subset; malformed input throws `YamlParseError`) and `packDigest` (pure, path-sorted `sha256:<hex>` over pack contents). `parseSimpleYaml` is now that reader.
