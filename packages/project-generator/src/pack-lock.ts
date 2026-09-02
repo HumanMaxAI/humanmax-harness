@@ -13,7 +13,7 @@ type PackFile = {
 };
 
 export function previewPackRoot(): string {
-  return realPath(fileURLToPath(new URL("../../../packs/base", import.meta.url)));
+  return realPath(fileURLToPath(new URL("../packs/base", import.meta.url)));
 }
 
 export function readPackEntries(root: string): { path: string; contents: string }[] {

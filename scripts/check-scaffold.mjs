@@ -23,6 +23,8 @@ const required = [
   "packages/cli/package.json",
   "packages/findings/package.json",
   "packages/create-humanmax-agent/package.json",
+  "packages/humanmax/package.json",
+  "scripts/build-workspaces.mjs",
   "templates/tool-agent/README.md",
   "skills/humanmax-agent-harness/SKILL.md",
 ];

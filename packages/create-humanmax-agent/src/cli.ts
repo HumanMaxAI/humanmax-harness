@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { basename, resolve } from "node:path";
 import { generateProject } from "@humanmax/project-generator";
 

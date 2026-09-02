@@ -16,7 +16,7 @@ This is an execution plan. It does not amend the design.
 
 - **Wave 1:** merged to `main` (`ef4a6cf` … `7600a87`).
 - **Wave 2:** implemented on `main` after Wave 1 (real pack digest, YAML consumption, `generated-project` CI job). `npm test` and `npm run typecheck` pass locally.
-- **Wave 3:** blocked. Needs maintainer npm login, explicit publish approval, and launch blockers 2–4 if they must land before the first public tarball.
+- **Wave 3:** packages are `0.1.0` and emit `dist/`. `npm whoami` is `humanmax` (org owner). `npm publish` of `@humanmax/contracts@0.1.0` was rejected: the registry requires 2FA or a granular access token with bypass-2FA. Account `tfa` is currently false. Generated projects stay on `file:` until a publish succeeds.
 
 ## Wave 1 — parallel (merged)
 

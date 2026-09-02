@@ -1,0 +1,31 @@
+{
+  "name": "humanmax",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "Convenience wrapper that installs the project-pinned humanmax CLI.",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HumanMaxAI/humanmax-harness.git",
+    "directory": "packages/humanmax"
+  },
+  "homepage": "https://github.com/HumanMaxAI/humanmax-harness",
+  "bugs": {
+    "url": "https://github.com/HumanMaxAI/humanmax-harness/issues"
+  },
+  "bin": {
+    "humanmax": "./cli.js"
+  },
+  "files": [
+    "cli.js"
+  ],
+  "dependencies": {
+    "@humanmax/cli": "^0.1.0"
+  }
+}
