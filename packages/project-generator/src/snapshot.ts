@@ -1,8 +1,9 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { readCanonicalYaml } from "@humanmax/contracts";
 import { fileDigest } from "./generate.ts";
 import { readPackEntries } from "./pack-lock.ts";
+import { assertRelativeInside, readTextInside } from "./safe-fs.ts";
 
 export type ProjectSnapshot = {
   project?: unknown;
@@ -17,21 +18,22 @@ export type ProjectSnapshot = {
 
 export function readProjectSnapshot(root: string): ProjectSnapshot {
   const fileDigests: Record<string, string> = {};
-  const lock = readJson(join(root, ".humanmax/generator.lock")) as
+  const lock = readJson(root, ".humanmax/generator.lock") as
     | ProjectSnapshot["generatorLock"]
     | undefined;
   if (lock?.files) {
     for (const path of Object.keys(lock.files)) {
-      const fullPath = join(root, path);
-      if (existsSync(fullPath)) {
-        fileDigests[path] = fileDigest(readFileSync(fullPath, "utf8"));
+      assertRelativeInside(path);
+      if (!existsSync(join(root, path))) {
+        continue;
       }
+      fileDigests[path] = fileDigest(readTextInside(root, path));
     }
   }
   const packDir = join(root, ".humanmax/packs/base");
   return {
-    project: readYaml(join(root, ".humanmax/project.yaml")),
-    packLock: readYaml(join(root, ".humanmax/packs.lock")),
+    project: readYaml(root, ".humanmax/project.yaml"),
+    packLock: readYaml(root, ".humanmax/packs.lock"),
     packEntries: existsSync(packDir) ? readPackEntries(packDir) : [],
     generatorLock: lock,
     tools: readTools(root),
@@ -46,20 +48,23 @@ function readTools(root: string): unknown[] {
   }
   return readdirSync(dir)
     .filter((name) => name.endsWith(".yaml") || name.endsWith(".yml"))
-    .map((name) => readYaml(join(dir, name)))
+    .map((name) => {
+      assertRelativeInside(name);
+      return readYaml(root, `.humanmax/tools/${name}`);
+    })
     .filter((tool) => tool !== undefined);
 }
 
-function readYaml(path: string): unknown | undefined {
-  if (!existsSync(path)) {
+function readYaml(root: string, relativePath: string): unknown | undefined {
+  if (!existsSync(join(root, relativePath))) {
     return undefined;
   }
-  return readCanonicalYaml(readFileSync(path, "utf8"), { source: path });
+  return readCanonicalYaml(readTextInside(root, relativePath), { source: relativePath });
 }
 
-function readJson(path: string): unknown | undefined {
-  if (!existsSync(path)) {
+function readJson(root: string, relativePath: string): unknown | undefined {
+  if (!existsSync(join(root, relativePath))) {
     return undefined;
   }
-  return JSON.parse(readFileSync(path, "utf8"));
+  return JSON.parse(readTextInside(root, relativePath));
 }

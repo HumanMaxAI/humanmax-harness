@@ -28,6 +28,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 - `humanmax test` reports the child runner's result as `PASS`/`FAIL`/`UNKNOWN` and never marks a non-zero child as `completed`.
 - Generated GitHub workflow is `workflow_dispatch` only until `@humanmax/*` is published. A hosted runner cannot resolve local `file:` paths; Harness CI status on GitHub is `UNKNOWN`, not a green check for checks that never ran.
 
+### Security
+
+- Pack and generator-lock reads refuse symbolic links, parent-path escapes, and oversized files. A lock entry such as `../.ssh/id_rsa` cannot be opened during `check`.
+- CI installs with `--ignore-scripts`, then runs the workspace build explicitly, and fails on high-or-critical `npm audit` findings.
+
 ### Fixed
 
 - Generated `file:` dependencies now resolve through real paths, so a macOS `/var` → `/private/var` hop no longer produces dangling `@humanmax/*` links. `npm install` in a generated project creates `node_modules/.bin/humanmax` and `npm test` can run.
