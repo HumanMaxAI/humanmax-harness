@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { runCli } from "./index.ts";
+import { runCli } from "@humanmax/cli";
 
 process.exitCode = await runCli(process.argv.slice(2), {
   cwd: process.cwd(),

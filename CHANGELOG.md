@@ -8,17 +8,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 ### Added
 
+- First public npm versions (`0.1.0`) emit compiled JavaScript and `.d.ts` to `dist/`. Bins are `dist/cli.js` with a Node shebang. `@humanmax/project-generator` embeds `packs/` at pack time so a published generator can still lock `base`.
+- Convenience package `humanmax` re-exports the `@humanmax/cli` bin so the unscoped name is reserved.
 - `@humanmax/contracts` exports `readCanonicalYaml` (bounded YAML subset; malformed input throws `YamlParseError`) and `packDigest` (pure, path-sorted `sha256:<hex>` over pack contents). `parseSimpleYaml` is now that reader.
 - `humanmax check` and `humanmax generate --check` accept `--format sarif` (SARIF 2.1.0 from the same finding set as JSON). `FAIL`, `UNKNOWN`, and `NEEDS_HUMAN_REVIEW` never map to SARIF `kind: pass`.
 - Deterministic `tool-agent` file-tree snapshot test (paths, ownership, content digests).
 - Real `npm install` + `npm test` + `humanmax doctor` coverage for a generated project; the previous test hand-linked packages and missed the install path.
 - Preview gap review (`docs/reviews/2026-09-02-preview-gap-review.md`) measuring `main@07448fa` against design §20 gates: the create → run → check loop does not work while repository CI is green.
-- Execution plan (`docs/plans/2026-09-02-preview-green-loop.md`) for the green loop, including the 2026-09-02 decisions (publish to npm, SARIF in Preview, contracts-first YAML/digest). Wave 1 is merged; Wave 2 is implemented locally; Wave 3 stays blocked on npm publish.
+- Execution plan (`docs/plans/2026-09-02-preview-green-loop.md`) for the green loop, including the 2026-09-02 decisions (publish to npm, SARIF in Preview, contracts-first YAML/digest). Wave 3 is ready to publish; npm rejected the first PUT because the `humanmax` account needs 2FA or a granular publish token.
 - Generated projects copy `packs/base` into `.humanmax/packs/base` and lock a real `packDigest`. Core recomputes the digest; a mismatch stops evaluation and the CLI exits 3.
 - Repository CI job `generated-project` creates, installs, tests, and checks a project from this checkout.
 
 ### Changed
 
+- Workspace packages are `0.1.0` and depend on each other with `^0.1.0`. Root `npm run build` compiles in dependency order. Generated projects still use local `file:` specifiers until the registry publish completes.
 - CLI exit codes: usage/config → 2, pack-lock schema trust → 3, unexpected execution failure → 4. Findings/tests still → 1.
 - `readProjectSnapshot` parses declarations with `readCanonicalYaml`. Malformed YAML throws rather than returning a partial object.
 - `CliResponse.versions` is read from installed package manifests instead of hardcoded `0.0.0`.

@@ -12,7 +12,8 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "node scripts/build-workspaces.mjs",
+    "prepare": "node scripts/build-workspaces.mjs",
     "test": "node scripts/check-scaffold.mjs && node --test scripts/co-author.test.mjs && npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
