@@ -1,0 +1,14 @@
+---
+description: This repo’s AI-native SDLC loop — intent, plan-before-code, verify-before-done
+alwaysApply: true
+---
+
+# Development loop
+
+Follow `docs/agents/2026-09-02-ai-native-sdlc.md`. PR review: `docs/agents/pr-review.md`.
+
+- Non-trivial work: dated `*-intent.md` in `docs/plans/` before a new design or plan, then a committed plan before the first implementation edit.
+- Before claiming done: run the lane’s commands and paste the output. Missing evidence is `UNKNOWN`.
+- Do not add `intent.md`, `spec.md`, `plan.md`, or `REVIEW.md` at the repository root.
+- Do not replace `AGENTS.md` with a Claude-specific operating file.
+- Do not expand Preview or close a headless production loop.

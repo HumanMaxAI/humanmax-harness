@@ -27,6 +27,9 @@ const required = [
   "scripts/build-workspaces.mjs",
   "scripts/publish-workspaces.mjs",
   "docs/agents/2026-09-02-npm-publish-ci.md",
+  "docs/agents/2026-09-02-ai-native-sdlc.md",
+  "docs/agents/pr-review.md",
+  "docs/plans/2026-09-02-ai-native-sdlc-intent.md",
   "templates/tool-agent/README.md",
   "skills/humanmax-agent-harness/SKILL.md",
 ];
@@ -34,6 +37,10 @@ const required = [
 const forbiddenAtRoot = [
   "HUMANMAX_HARNESS_OPEN_SOURCE_DESIGN.md",
   "PRODUCT_REVIEW.md",
+  "REVIEW.md",
+  "intent.md",
+  "spec.md",
+  "plan.md",
 ];
 
 for (const rel of required) {
