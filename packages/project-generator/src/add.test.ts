@@ -22,11 +22,12 @@ test("add tool dry-run reports files and writes nothing extra", async () => {
     dryRun: true,
   });
   assert.ok(plan.files.some((file) => file.path.endsWith("ticket-read.tool.yaml")));
+  assert.ok(plan.files.some((file) => file.path === "docs/tools/ticket-read.md"));
   assert.equal(plan.wrote, false);
   assert.deepEqual((await readdir(join(dest, ".humanmax/tools"))).sort(), before);
 });
 
-test("add tool writes declaration, source, and a gateway test", async () => {
+test("add tool writes declaration, source, a gateway test, and documentation", async () => {
   const dest = await generated();
   const plan = addTool({
     destination: dest,
@@ -45,6 +46,17 @@ test("add tool writes declaration, source, and a gateway test", async () => {
   const testSource = await readFile(join(dest, "tests/notes-archive.test.ts"), "utf8");
   assert.match(testSource, /LocalReviewAdapter/);
   assert.doesNotMatch(testSource, /skip gateway|direct client/i);
+  const docs = await readFile(join(dest, "docs/tools/notes-archive.md"), "utf8");
+  assert.match(docs, /notes-archive/);
+  assert.match(docs, /reversible-write/);
+  assert.match(docs, /action gateway/);
+  assert.match(docs, /\.humanmax\//);
+  assert.match(docs, /does not enforce production actions, issue certification/i);
+  assert.doesNotMatch(docs, /certified|regulator-approved|safe for production/i);
+  const lock = JSON.parse(
+    await readFile(join(dest, ".humanmax/generator.lock"), "utf8"),
+  ) as { files?: Record<string, { class: string }> };
+  assert.equal(lock.files?.["docs/tools/notes-archive.md"]?.class, "user-owned");
 });
 
 test("add tool refuses an existing identifier", async () => {

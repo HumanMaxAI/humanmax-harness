@@ -108,6 +108,7 @@ test("${request.id} stays on the action gateway", async () => {
     file(yamlPath, "canonical", yaml),
     file("src/tools.ts", "user-owned", toolsSource),
     file(`tests/${request.id}.test.ts`, "user-owned", testSource),
+    file(`docs/tools/${request.id}.md`, "user-owned", toolDocsMd(request.id, request.effect, gateway)),
   ];
 
   const agentPath = join(destination, ".humanmax/agents/default.agent.yaml");
@@ -176,6 +177,20 @@ function file(
   contents: string,
 ): GenerateFile {
   return { path, ownership, contents };
+}
+
+function toolDocsMd(id: string, effect: EffectClass, gateway: string): string {
+  return `# Tool: ${id}
+
+Canonical declaration: \`.humanmax/tools/${id}.tool.yaml\`
+
+- \`effectClass\`: ${effect}
+- \`gateway\`: ${gateway}
+
+This stub is a derived view. Control decisions live in \`.humanmax/\`. Effectful calls go through the action gateway. There is no direct-call shortcut.
+
+Harness does not enforce production actions, issue certification, or replace IAM, GRC, SIEM, or a secrets manager. Do not treat this file as an approval, owner assignment, or production-enforcement claim.
+`;
 }
 
 function updateLock(destination: string, files: GenerateFile[]): void {
