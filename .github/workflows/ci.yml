@@ -16,7 +16,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npm audit --audit-level=high
       - run: npm run typecheck
       - run: npm test
 
@@ -30,7 +32,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - run: npm ci --ignore-scripts
+      - run: npm run build
       - name: Create, install, test, and check a generated project
         run: |
           dest="$RUNNER_TEMP/demo-agent"
