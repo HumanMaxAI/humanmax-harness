@@ -47,12 +47,13 @@ Design and review are different artefacts. Do not mix them.
 | Product / architecture design | `docs/design/` | Normative intent, contracts, workflows, public claims |
 | Reviews | `docs/reviews/` | Verdicts, findings, cuts, risk, go / no-go |
 | Agent operating notes | `docs/agents/` | Lanes, worktrees, claim protocol |
-| Implementation plans | `docs/plans/` | Task-level execution plans |
+| Implementation plans | `docs/plans/` | Task-level execution plans and `*-intent.md` proto-specs |
 | User-facing docs | `docs/guides/` | How to use published packages, when they exist |
 
 Rules:
 
 - Do not add design or review files at the repository root.
+- Do not add `intent.md`, `spec.md`, `plan.md`, or `REVIEW.md` at the repository root. Use the dated files under `docs/` instead.
 - Do not put review findings inside a design document.
 - Do not “fix” a design by silently rewriting it during implementation. Open a review note or a dated design revision.
 - Date new files `YYYY-MM-DD-<topic>.md`.
@@ -60,6 +61,16 @@ Rules:
 
 Current canonical design: `docs/design/2026-08-29-open-source-product-design.md`  
 Current product review: `docs/reviews/2026-08-30-product-review.md`
+
+## Development loop
+
+Non-trivial work in this repository follows the artifact chain in [`docs/agents/2026-09-02-ai-native-sdlc.md`](docs/agents/2026-09-02-ai-native-sdlc.md). Pull request review uses [`docs/agents/pr-review.md`](docs/agents/pr-review.md).
+
+1. Capture intent as `docs/plans/YYYY-MM-DD-<topic>-intent.md` unless the human already pointed at a design, review, or plan.
+2. Commit a plan before the first implementation edit. Name files, order, risks, and proof.
+3. Before claiming done, run the lane’s verification commands and paste the output. Missing evidence is `UNKNOWN`, not a pass.
+
+Do not import Anthropic root filenames or a headless production loop. `AGENTS.md` stays the operating source of truth.
 
 ## Preview scope — do not expand
 
@@ -181,6 +192,7 @@ An agent MUST:
 6. Update `CHANGELOG.md` with today’s local date before a non-trivial commit.
 7. Leave a clean typecheck and the workspace tests that cover the touched lane.
 8. End every agent-authored commit with a `Co-authored-by` trailer that names the harness tool and the model. See [Commits](#commits).
+9. For non-trivial work, follow [Development loop](#development-loop): intent (when required), committed plan before implementation, pasted verification before “done”.
 
 ## Generated-project contract
 
