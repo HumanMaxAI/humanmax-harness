@@ -25,6 +25,8 @@ const required = [
   "packages/create-humanmax-agent/package.json",
   "packages/humanmax/package.json",
   "scripts/build-workspaces.mjs",
+  "scripts/publish-workspaces.mjs",
+  "docs/agents/2026-09-02-npm-publish-ci.md",
   "templates/tool-agent/README.md",
   "skills/humanmax-agent-harness/SKILL.md",
 ];

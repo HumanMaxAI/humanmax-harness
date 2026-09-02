@@ -18,6 +18,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 - Execution plan (`docs/plans/2026-09-02-preview-green-loop.md`) for the green loop, including the 2026-09-02 decisions (publish to npm, SARIF in Preview, contracts-first YAML/digest). Wave 3 is ready to publish; npm rejected the first PUT because the `humanmax` account needs 2FA or a granular publish token.
 - Generated projects copy `packs/base` into `.humanmax/packs/base` and lock a real `packDigest`. Core recomputes the digest; a mismatch stops evaluation and the CLI exits 3.
 - Repository CI job `generated-project` creates, installs, tests, and checks a project from this checkout.
+- CI `publish` job on `main` after `workspace` (tests, typecheck, `npm audit --audit-level=high`) and `generated-project`. Pull requests do not publish. Versions already on the registry are skipped.
 
 ### Changed
 
@@ -32,6 +33,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 - Pack and generator-lock reads refuse symbolic links, parent-path escapes, and oversized files. A lock entry such as `../.ssh/id_rsa` cannot be opened during `check`.
 - CI installs with `--ignore-scripts`, then runs the workspace build explicitly, and fails on high-or-critical `npm audit` findings.
+- Compiled CLI bins are marked executable before pack so npm does not strip them.
 
 ### Fixed
 
