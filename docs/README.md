@@ -6,6 +6,6 @@
 | [reviews/](./reviews/) | Reviews, cuts, and launch risk |
 | [agents/](./agents/) | Multi-agent operating model |
 | [guides/](./guides/) | User-facing how-to, when packages are published |
-| [plans/](./plans/) | Implementation plans |
+| [plans/](./plans/) | Implementation plans and `*-intent.md` proto-specs |
 
 Binding agent constraints: [`/AGENTS.md`](../AGENTS.md).
