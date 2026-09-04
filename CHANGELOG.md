@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-04
+
+### Added
+
+- Contract fixtures for an incompatible or empty `apiVersion` and for the budget boundary (0 rejected, 1 accepted). Closes Preview gate G18 without changing validation rules.
+
 ## [Unreleased] - 2026-09-02
 
 ### Added

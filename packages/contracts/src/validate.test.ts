@@ -63,3 +63,30 @@ test("exception never rewrites a finding result to PASS", () => {
   assert.equal(governed.result, "FAIL");
   assert.equal(governed.governanceStatus, "accepted-risk");
 });
+
+test("an incompatible apiVersion is rejected", () => {
+  const project = previewProject();
+  project.apiVersion = "humanmax.ai/harness/v0";
+  const result = validate("HarnessProject", project);
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.ok(result.errors.some((error) => /apiVersion/.test(error)));
+  }
+});
+
+test("an empty apiVersion is rejected", () => {
+  const project = previewProject();
+  project.apiVersion = "";
+  const result = validate("HarnessProject", project);
+  assert.equal(result.ok, false);
+});
+
+test("a budget of zero is rejected and one is accepted", () => {
+  const zero = previewProject();
+  zero.spec.runtime.defaultBudgets.maxSteps = 0;
+  assert.equal(validate("HarnessProject", zero).ok, false);
+
+  const one = previewProject();
+  one.spec.runtime.defaultBudgets.maxSteps = 1;
+  assert.equal(validate("HarnessProject", one).ok, true);
+});
