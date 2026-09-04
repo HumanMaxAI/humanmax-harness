@@ -135,3 +135,24 @@ test("emitted findings validate against the finding contract", () => {
     assert.equal(checked.ok, true, JSON.stringify(checked));
   }
 });
+
+test("bounded autonomy is NEEDS_HUMAN_REVIEW and not a pass", () => {
+  const project = previewProject();
+  project.spec.autonomy = "bounded";
+  const result = evaluate({ project, tools: [previewTool()] });
+  const finding = result.findings.find((item) => item.ruleId === "HMX-PROJ-001");
+  assert.equal(finding?.result, "NEEDS_HUMAN_REVIEW");
+  assert.notEqual(finding?.result, "PASS");
+  assert.equal(result.summary.needsHumanReview, 1);
+  assert.equal(result.summary.pass, 1);
+  const checked = validate("Finding", finding);
+  assert.equal(checked.ok, true, JSON.stringify(checked));
+});
+
+test("assisted preview project does not emit NEEDS_HUMAN_REVIEW", () => {
+  const result = evaluate({ project: previewProject(), tools: [previewTool()] });
+  assert.equal(
+    result.findings.some((item) => item.result === "NEEDS_HUMAN_REVIEW"),
+    false,
+  );
+});

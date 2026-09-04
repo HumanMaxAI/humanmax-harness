@@ -106,6 +106,29 @@ function projectFinding(project: unknown): Finding {
       },
     });
   }
+  if (checked.value.spec.autonomy === "bounded") {
+    return makeFinding({
+      ruleId: PREVIEW_RULES.productionEnforcement,
+      result: "NEEDS_HUMAN_REVIEW",
+      severity: "high",
+      confidence: "deterministic",
+      title: "Bounded autonomy needs a human decision",
+      message:
+        "Autonomy is bounded. A human must accept the blast radius. This is not a pass and not production enforcement.",
+      subject: { type: "project", id: checked.value.metadata.projectId },
+      locations,
+      evidence: [
+        {
+          type: "declaration",
+          ref: `autonomy:${checked.value.spec.autonomy}`,
+        },
+      ],
+      remediation: {
+        classification: "review-required",
+        summary: "Keep Preview at assisted unless a human accepts bounded autonomy.",
+      },
+    });
+  }
   return makeFinding({
     ruleId: PREVIEW_RULES.productionEnforcement,
     result: "PASS",

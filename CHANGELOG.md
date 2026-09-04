@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-04
+
+### Added
+
+- Core emits `NEEDS_HUMAN_REVIEW` when a valid project declares `autonomy: bounded`. The default Preview path stays `assisted` and still PASSes the enforcement rule. Absence of evidence remains `UNKNOWN`.
+
 ## [Unreleased] - 2026-09-02
 
 ### Added
