@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-10
+
+### Added
+
+- CLI completion plan covering strict arguments, project diagnostics, guarded execution, and generated-project/offline verification within Preview.
+
 ## [Unreleased] - 2026-09-02
 
 ### Added
