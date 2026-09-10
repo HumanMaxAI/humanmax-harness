@@ -1,8 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, realpathSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { existsSync, realpathSync } from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
 import {
   EXIT_CODES,
   PACK_LOCK_API_VERSION,
@@ -12,13 +11,14 @@ import {
   type CliResponse,
   type EffectClass,
   type ResultState,
+  YamlParseError,
 } from "@humanmax/contracts";
 import { evaluate } from "@humanmax/core";
 import {
   addEval,
   addTool,
   planUpgrade,
-  readProjectSnapshot,
+  generateProject,
 } from "@humanmax/project-generator";
 import {
   errorMessage,
@@ -29,6 +29,8 @@ import {
 } from "./errors.ts";
 import { toSarif } from "./sarif.ts";
 import { packageVersions } from "./versions.ts";
+import { projectPath, readProjectFile, snapshotProject, validateDeclarations } from "./project.ts";
+import { runFixture } from "./fixture.ts";
 import { parseArgs, type OutputFormat } from "./args.ts";
 export { OUTPUT_FORMATS, SARIF_COMMANDS } from "./args.ts";
 export type { OutputFormat } from "./args.ts";
@@ -73,8 +75,10 @@ type Io = {
 };
 
 export async function runCli(argv: string[], io: Io): Promise<number> {
+  let request: ReturnType<typeof parseArgs> | undefined;
   try {
     const parsed = parseArgs(argv);
+    request = parsed;
     const { command, flags, format } = parsed;
     if (flags.has("--help")) {
       io.stdout.write(usage);
@@ -93,8 +97,22 @@ export async function runCli(argv: string[], io: Io): Promise<number> {
     }
     return response.status === "completed" ? EXIT_CODES.ok : EXIT_CODES.failed;
   } catch (error) {
-    io.stderr.write(`${errorMessage(error)}\n`);
-    return exitCodeForError(error);
+    const failure = error instanceof YamlParseError ? usageError(error.message) : error;
+    const code = exitCodeForError(failure);
+    const message = stripAnsi(errorMessage(failure));
+    io.stderr.write(`${message}\n`);
+    if (request?.format === "json") {
+      const response: CliResponse = {
+        apiVersion: "humanmax.ai/cli-response/v1alpha1", kind: "CliResponse",
+        command: request.command, status: "failed", versions: packageVersions(),
+        project: { root: resolve(io.cwd), configDigest: "sha256:unavailable", packLockDigest: "sha256:unavailable" },
+        summary: { pass: 0, fail: code === EXIT_CODES.internal ? 0 : 1, unknown: code === EXIT_CODES.internal ? 1 : 0, needsHumanReview: 0 },
+        results: [{ result: code === EXIT_CODES.internal ? "UNKNOWN" : "FAIL", exitCode: code, message }],
+        coverage: { skippedPaths: [], limitations: ["Command did not complete; no successful check is evidenced."] },
+      };
+      print(io, response, "json");
+    }
+    return code;
   }
 }
 
@@ -118,6 +136,9 @@ async function dispatch(
     return runCheck(root, "generate --check");
   }
   if (command === "upgrade") {
+    snapshotProject(root);
+    const preview = generateProject({ destination: root, name: basename(root), dryRun: true });
+    for (const file of preview.files) readProjectFile(root, file.path);
     const plan = planUpgrade({ destination: root });
     return respond("upgrade", root, "completed", plan.files, {
       pass: plan.files.filter((file) => file.action === "unchanged").length,
@@ -133,14 +154,14 @@ async function dispatch(
     return runProjectTests(root);
   }
   if (command === "dev") {
-    const moduleUrl = pathToFileURL(join(root, "src/index.ts")).href;
-    const mod = (await import(moduleUrl)) as {
-      runFixture?: () => Promise<unknown>;
-    };
-    if (!mod.runFixture) {
-      throw usageError("Generated project does not export runFixture()");
+    const snapshot = snapshotProject(root);
+    const project = validateDeclarations(root, snapshot);
+    const evaluation = evaluate({ ...snapshot, generatorLock: undefined });
+    if (evaluation.findings.some((finding) => finding.result !== "PASS")) {
+      return respond("dev", root, "failed", evaluation.findings, evaluation.summary);
     }
-    const result = await mod.runFixture();
+    projectPath(root, "src/index.ts");
+    const result = runFixture(root, project.spec.runtime.defaultBudgets.timeoutSeconds);
     return respond("dev", root, "completed", [result]);
   }
   throw usageError(`Unsupported command: ${command}`);
@@ -159,6 +180,13 @@ function runAdd(
       "Usage: humanmax add tool <id> --effect <class> | humanmax add eval <id>",
     );
   }
+  const snapshot = snapshotProject(root);
+  validateDeclarations(root, snapshot);
+  const target = kind === "tool" ? `.humanmax/tools/${id}.tool.yaml` : `evals/${id}.eval.ts`;
+  if (readProjectFile(root, target) !== undefined) throw usageError(`Component already exists: ${id}`);
+  for (const path of ["src/tools.ts", ".humanmax/agents/default.agent.yaml", ".humanmax/generator.lock"]) {
+    readProjectFile(root, path);
+  }
   if (kind === "eval") {
     const plan = addEval({ destination: root, id, dryRun: flags.has("--dry-run") });
     return respond("add eval", root, "completed", plan.files);
@@ -166,40 +194,48 @@ function runAdd(
   if (!effect) {
     throw usageError("humanmax add tool requires --effect");
   }
-  const plan = addTool({
-    destination: root,
-    id,
-    effect,
-    dryRun: flags.has("--dry-run"),
-  });
+  const request = { destination: root, id, effect };
+  const preview = addTool({ ...request, dryRun: true });
+  for (const file of preview.files) {
+    const existing = readProjectFile(root, file.path);
+    if (existing !== undefined && file.path !== "src/tools.ts" && file.path !== ".humanmax/agents/default.agent.yaml") {
+      throw usageError(`Refusing to overwrite existing file: ${file.path}`);
+    }
+  }
+  const plan = flags.has("--dry-run") ? preview : addTool(request);
   return respond("add tool", root, "completed", plan.files);
 }
 
 function doctor(root: string): CliResponse {
-  const snapshot = readProjectSnapshot(root);
-  const project = snapshot.project as {
-    spec?: {
-      generator?: { template?: string };
-      runtime?: { productionEnforcement?: string; enforcementAdapter?: string };
-      profiles?: string[];
-    };
-  } | undefined;
-  return respond("doctor", root, "completed", [
-    {
-      template: project?.spec?.generator?.template ?? "unknown",
-      profiles: project?.spec?.profiles ?? [],
-      productionEnforcement: project?.spec?.runtime?.productionEnforcement ?? "unknown",
-      enforcementAdapter: project?.spec?.runtime?.enforcementAdapter ?? "unknown",
+  const snapshot = snapshotProject(root);
+  const evaluation = evaluate({ ...snapshot, generatorLock: snapshot.generatorLock ?? {} });
+  let project;
+  let diagnostic;
+  try {
+    project = validateDeclarations(root, snapshot);
+  } catch (error) {
+    if (exitCodeForError(error) !== EXIT_CODES.usage && !(error instanceof YamlParseError)) throw error;
+    diagnostic = { result: "FAIL", message: errorMessage(error) };
+  }
+  const summary = { ...evaluation.summary };
+  if (diagnostic) summary.fail += 1;
+  return respond("doctor", root,
+    summary.fail || summary.unknown || summary.needsHumanReview ? "failed" : "completed",
+    [{
+      template: project?.spec.generator.template ?? "unknown",
+      profiles: project?.spec.profiles ?? [],
+      productionEnforcement: project?.spec.runtime.productionEnforcement ?? "unknown",
+      enforcementAdapter: project?.spec.runtime.enforcementAdapter ?? "unknown",
       versions: packageVersions(),
-    },
-  ]);
+    }, ...evaluation.findings, ...(diagnostic ? [diagnostic] : [])], summary);
 }
 
 function runCheck(root: string, command: string): CliResponse {
-  const snapshot = readProjectSnapshot(root);
-  const evaluation = evaluate(snapshot);
+  const snapshot = snapshotProject(root);
+  const evaluation = evaluate({ ...snapshot, generatorLock: snapshot.generatorLock ?? {} });
   const failed =
     evaluation.summary.fail > 0 ||
+    (command === "generate --check" && evaluation.findings.some((finding) => finding.result !== "PASS")) ||
     evaluation.findings.some(
       (finding) =>
         finding.result === "UNKNOWN" &&
@@ -255,8 +291,6 @@ function respond(
   results: unknown[],
   summary?: CliResponse["summary"],
 ): CliResponse {
-  const projectYaml = join(root, ".humanmax/project.yaml");
-  const packLock = join(root, PACK_LOCK_PATH);
   const response: CliResponse = {
     apiVersion: "humanmax.ai/cli-response/v1alpha1",
     kind: "CliResponse",
@@ -265,8 +299,8 @@ function respond(
     versions: packageVersions(),
     project: {
       root,
-      configDigest: digestFile(projectYaml),
-      packLockDigest: digestFile(packLock),
+      configDigest: digestFile(root, ".humanmax/project.yaml"),
+      packLockDigest: digestFile(root, PACK_LOCK_PATH),
     },
     summary: summary ?? {
       pass: status === "completed" ? 1 : 0,
@@ -300,6 +334,7 @@ function print(io: Io, response: CliResponse, format: OutputFormat): void {
   }
   const lines = [
     `${response.command}: ${response.status} pass=${response.summary.pass} fail=${response.summary.fail} unknown=${response.summary.unknown} needsHumanReview=${response.summary.needsHumanReview}`,
+    ...response.results.map((result) => `  ${stripAnsi(JSON.stringify(result))}`),
     ...response.coverage.limitations.map((limitation) => `  limitation: ${limitation}`),
   ];
   io.stdout.write(`${lines.join("\n")}\n`);
@@ -327,13 +362,11 @@ export function findProjectRoot(start: string): string {
  * itself stays a Core rule.
  */
 function assertPackLockSupported(root: string): void {
-  const path = join(root, PACK_LOCK_PATH);
-  if (!existsSync(path)) {
-    return;
-  }
   let parsed: unknown;
   try {
-    parsed = readCanonicalYaml(readFileSync(path, "utf8"), { source: path });
+    const text = readProjectFile(root, PACK_LOCK_PATH);
+    if (text === undefined) return;
+    parsed = readCanonicalYaml(text, { source: PACK_LOCK_PATH });
   } catch (error) {
     throw packTrustError(
       `Cannot read ${PACK_LOCK_PATH}, so pack trust cannot be established: ${errorMessage(error)}`,
@@ -362,11 +395,12 @@ function hasPackTrustFailure(response: CliResponse): boolean {
   );
 }
 
-function digestFile(path: string): string {
-  if (!existsSync(path)) {
+function digestFile(root: string, path: string): string {
+  const text = readProjectFile(root, path);
+  if (text === undefined) {
     return "sha256:missing";
   }
-  return `sha256:${createHash("sha256").update(readFileSync(path)).digest("hex")}`;
+  return `sha256:${createHash("sha256").update(text).digest("hex")}`;
 }
 
 const OSC_SEQUENCE = /\u001B\][\s\S]*?(?:\u0007|\u001B\\)/g;
