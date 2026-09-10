@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, realpath, symlink } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, symlink, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -26,6 +26,57 @@ async function project(): Promise<string> {
   generateProject({ destination: dest, name: "demo-agent", apply: true });
   return dest;
 }
+
+async function tree(root: string): Promise<Record<string, string>> {
+  const files: Record<string, string> = {};
+  for (const path of await readdir(root, { recursive: true, withFileTypes: true })) {
+    if (path.isFile()) {
+      const full = join(path.parentPath, path.name);
+      files[full.slice(root.length)] = await readFile(full, "utf8");
+    }
+  }
+  return files;
+}
+
+test("help and version succeed without a project", () => {
+  for (const args of [["--help"], ["add", "--help"], ["--version"], ["doctor", "--version"]]) {
+    const result = run(args, tmpdir());
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(result.stdout.length > 0);
+    assert.equal(result.stderr, "");
+  }
+});
+
+test("boolean flags do not consume command positionals", async () => {
+  const dest = await project();
+  const before = await tree(dest);
+  const result = run(["--dry-run", "add", "tool", "ordered-read", "--format=json", "--effect=read"], dest);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).command, "add tool");
+  assert.deepEqual(await tree(dest), before);
+});
+
+test("invalid arguments fail before any project writes", async () => {
+  const dest = await project();
+  const before = await tree(dest);
+  const cases = [
+    ["check", "--typo"], ["check", "extra"], ["check", "--dry-run"],
+    ["add", "tool", "bad-effect", "--effect", "network"],
+    ["add", "tool", "missing-value", "--effect", "--dry-run"],
+    ["add", "eval", "bad-eval", "--effect", "read"],
+    ["add", "eval", "bad-eval", "extra"],
+    ["add", "eval", "bad-eval", "--dry-run", "--apply"],
+    ["add", "eval", "../outside"],
+    ["check", "--format", "json", "--format", "terminal"],
+    ["generate", "--check", "--apply"],
+    ["upgrade", "--dry-run", "--to", "9.0.0"],
+  ];
+  for (const args of cases) {
+    const result = run(args, dest);
+    assert.equal(result.status, 2, `${args.join(" ")}: ${result.stderr}`);
+    assert.deepEqual(await tree(dest), before, args.join(" "));
+  }
+});
 
 test("preview CLI surface stays thin", () => {
   assert.deepEqual(previewCommands(), [

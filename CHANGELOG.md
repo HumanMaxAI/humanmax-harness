@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 ## [Unreleased] - 2026-09-10
 
+### Fixed
+
+- CLI arguments now reject unknown, duplicate, incompatible, or missing-value options before writes, validate effect classes, and preserve positionals around boolean flags. Help and version succeed outside projects.
+
 ### Added
 
 - CLI completion plan covering strict arguments, project diagnostics, guarded execution, and generated-project/offline verification within Preview.

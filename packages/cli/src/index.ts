@@ -29,6 +29,9 @@ import {
 } from "./errors.ts";
 import { toSarif } from "./sarif.ts";
 import { packageVersions } from "./versions.ts";
+import { parseArgs, type OutputFormat } from "./args.ts";
+export { OUTPUT_FORMATS, SARIF_COMMANDS } from "./args.ts";
+export type { OutputFormat } from "./args.ts";
 
 export const EXIT_USAGE = EXIT_CODES.usage;
 
@@ -36,15 +39,6 @@ export { PREVIEW_CLI_COMMANDS };
 export { CliError, exitCodeForError } from "./errors.ts";
 export { sarifKind, sarifLevel, toSarif } from "./sarif.ts";
 export { packageVersions } from "./versions.ts";
-
-export const OUTPUT_FORMATS = ["terminal", "json", "sarif"] as const;
-export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
-
-/**
- * Only finding-producing commands may emit SARIF. An empty SARIF run from a
- * command that produces no findings would read as a clean scan.
- */
-export const SARIF_COMMANDS = ["check", "generate"] as const;
 
 const PACK_LOCK_PATH = ".humanmax/packs.lock";
 const TAIL_LINES = 20;
@@ -79,24 +73,20 @@ type Io = {
 };
 
 export async function runCli(argv: string[], io: Io): Promise<number> {
-  const { flags, positionals } = parseArgs(argv);
-  if (flags.has("-h") || flags.has("--help") || positionals.length === 0) {
-    io.stderr.write(usage);
-    return EXIT_CODES.usage;
-  }
-  const command = positionals[0];
-  if (!command || !(PREVIEW_CLI_COMMANDS as readonly string[]).includes(command)) {
-    io.stderr.write(usage);
-    return EXIT_CODES.usage;
-  }
   try {
-    const format = parseFormat(argv, command);
-    if (command === "upgrade" && (flags.has("--apply") || !flags.has("--dry-run"))) {
-      throw usageError("Preview only supports humanmax upgrade --dry-run.");
+    const parsed = parseArgs(argv);
+    const { command, flags, format } = parsed;
+    if (flags.has("--help")) {
+      io.stdout.write(usage);
+      return EXIT_CODES.ok;
+    }
+    if (flags.has("--version")) {
+      io.stdout.write(`${packageVersions().cli}\n`);
+      return EXIT_CODES.ok;
     }
     const root = findProjectRoot(io.cwd);
     assertPackLockSupported(root);
-    const response = await dispatch(command, positionals.slice(1), flags, root, argv);
+    const response = await dispatch(command, parsed.rest, flags, root, parsed.effect);
     print(io, response, format);
     if (hasPackTrustFailure(response)) {
       return EXIT_CODES.packTrust;
@@ -113,7 +103,7 @@ async function dispatch(
   rest: string[],
   flags: Set<string>,
   root: string,
-  argv: string[],
+  effect: EffectClass | undefined,
 ): Promise<CliResponse> {
   if (command === "doctor") {
     return doctor(root);
@@ -137,7 +127,7 @@ async function dispatch(
     });
   }
   if (command === "add") {
-    return runAdd(root, rest, flags, argv);
+    return runAdd(root, rest, flags, effect);
   }
   if (command === "test") {
     return runProjectTests(root);
@@ -160,7 +150,7 @@ function runAdd(
   root: string,
   rest: string[],
   flags: Set<string>,
-  argv: string[],
+  effect: EffectClass | undefined,
 ): CliResponse {
   const kind = rest[0];
   const id = rest[1];
@@ -173,7 +163,6 @@ function runAdd(
     const plan = addEval({ destination: root, id, dryRun: flags.has("--dry-run") });
     return respond("add eval", root, "completed", plan.files);
   }
-  const effect = flagValue(argv, "--effect") as EffectClass | undefined;
   if (!effect) {
     throw usageError("humanmax add tool requires --effect");
   }
@@ -371,50 +360,6 @@ function hasPackTrustFailure(response: CliResponse): boolean {
       "result" in item &&
       item.result === "FAIL",
   );
-}
-
-function parseFormat(argv: string[], command: string): OutputFormat {
-  const index = argv.indexOf("--format");
-  if (index === -1) {
-    return "terminal";
-  }
-  const value = argv[index + 1];
-  if (!value || !(OUTPUT_FORMATS as readonly string[]).includes(value)) {
-    throw usageError(`--format requires one of: ${OUTPUT_FORMATS.join(", ")}`);
-  }
-  const format = value as OutputFormat;
-  if (format === "sarif" && !(SARIF_COMMANDS as readonly string[]).includes(command)) {
-    throw usageError(
-      `--format sarif is only available for: ${SARIF_COMMANDS.join(", ")}. Other commands produce no findings, and an empty SARIF run would read as a clean scan.`,
-    );
-  }
-  return format;
-}
-
-function parseArgs(argv: string[]): { flags: Set<string>; positionals: string[] } {
-  const flags = new Set<string>();
-  const positionals: string[] = [];
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    if (!arg) continue;
-    if (arg.startsWith("--") || arg.startsWith("-")) {
-      flags.add(arg);
-      const next = argv[i + 1];
-      if (next && !next.startsWith("-")) {
-        i += 1;
-      }
-      continue;
-    }
-    positionals.push(arg);
-  }
-  return { flags, positionals };
-}
-
-function flagValue(argv: string[], name: string): string | undefined {
-  const index = argv.indexOf(name);
-  if (index === -1) return undefined;
-  const value = argv[index + 1];
-  return value && !value.startsWith("-") ? value : undefined;
 }
 
 function digestFile(path: string): string {
