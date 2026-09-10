@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-11
+
+### Fixed
+
+- `doctor` validates canonical declarations and reports Core findings; `dev` validates agent/tool references before loading application code. Missing generator evidence fails `generate --check` without promoting UNKNOWN to PASS.
+- CLI pack prechecks, response digests, add plans, and upgrade previews reject unsafe file paths; malformed generator locks and existing component outputs are refused before writes.
+- `dev` runs the fixture in a child process with bounded time/output and a separate result channel, keeping application logs out of JSON. Configuration failures from parsed JSON requests now return a failed CLI envelope.
+- Terminal command output includes results and planned file paths.
+
 ## [Unreleased] - 2026-09-10
 
 ### Fixed
