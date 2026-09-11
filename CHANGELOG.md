@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 ### Added
 
+- Fresh generated-scaffold acceptance review: local CLI loop passes, but generated build/types, eval execution, upgrade completeness, add-tool docs, portability and structural conformance remain incomplete.
+
 - Real generated-install integration coverage for the complete pinned Preview CLI loop, plus a macOS OS-network-denial proof for `check` and `generate --check` with positive and negative network controls.
 - CLI command, output, exit-code, filesystem-boundary and verification documentation.
 
