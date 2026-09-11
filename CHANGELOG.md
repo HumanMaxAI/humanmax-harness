@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 ## [Unreleased] - 2026-09-11
 
+### Planned
+
+- Remediate the locally reproduced generated-build, eval execution, upgrade coverage and user-owned integrity gaps; preserve outstanding structural and distribution gates.
+
 ### Added
 
 - Fresh generated-scaffold acceptance review: local CLI loop passes, but generated build/types, eval execution, upgrade completeness, add-tool docs, portability and structural conformance remain incomplete.
