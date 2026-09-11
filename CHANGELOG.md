@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 ## [Unreleased] - 2026-09-11
 
+### Added
+
+- Real generated-install integration coverage for the complete pinned Preview CLI loop, plus a macOS OS-network-denial proof for `check` and `generate --check` with positive and negative network controls.
+- CLI command, output, exit-code, filesystem-boundary and verification documentation.
+
 ### Fixed
 
 - `doctor` validates canonical declarations and reports Core findings; `dev` validates agent/tool references before loading application code. Missing generator evidence fails `generate --check` without promoting UNKNOWN to PASS.

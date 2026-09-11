@@ -42,3 +42,9 @@ Keep `dev`, `add tool`, `add eval`, `generate --check`, `upgrade --dry-run`, `te
 ## Verification and delivery
 
 Each implementation slice starts with regression tests and ends with focused verification. Final commands: `npm run build`, `npm test`, `npm run typecheck`, `node scripts/check-scaffold.mjs`. Paste exit-bearing summaries before claiming success. Inspect the final diff against `docs/agents/pr-review.md`, update the dated review, commit with generated attribution, and push over the configured HumanMaxAI SSH remote. Human merge and publishing remain separate gates.
+
+## Implementation notes (2026-09-11)
+
+Argument regressions live in `cli.test.ts` rather than a separate `args.test.ts`. File-boundary tests live in `project.test.ts`. `fixture.ts` and `fixture-worker.ts` isolate execution and JSON results. `integration.test.ts` exercises the compiled pinned CLI after real install. The OS offline proof is the explicit `packages/cli/verification/offline.mjs` command, which reports UNKNOWN outside macOS rather than weakening the proof to proxy or JavaScript interception.
+
+The independent review agent failed due to its usage limit; it produced no review evidence. The author performs the repository's three review passes and leaves human review/merge outstanding. No other claimed lane was edited or merged.
