@@ -31,6 +31,7 @@ import { toSarif } from "./sarif.ts";
 import { packageVersions } from "./versions.ts";
 import { projectPath, readProjectFile, snapshotProject, validateDeclarations } from "./project.ts";
 import { runFixture } from "./fixture.ts";
+import { runEvals } from "./evals.ts";
 import { parseArgs, type OutputFormat } from "./args.ts";
 export { OUTPUT_FORMATS, SARIF_COMMANDS } from "./args.ts";
 export type { OutputFormat } from "./args.ts";
@@ -261,27 +262,20 @@ function runProjectTests(root: string): CliResponse {
   const signal = spawned.signal ?? null;
   const result: ResultState =
     exitCode === 0 ? "PASS" : exitCode === null ? "UNKNOWN" : "FAIL";
-  return respond(
-    "test",
-    root,
-    result === "PASS" ? "completed" : "failed",
-    [
-      {
-        runner: "npm test",
-        result,
-        exitCode,
-        signal,
-        stdoutTail: tail(spawned.stdout),
-        stderrTail: tail(spawned.stderr),
-      },
-    ],
+  const results = [
     {
-      pass: result === "PASS" ? 1 : 0,
-      fail: result === "FAIL" ? 1 : 0,
-      unknown: result === "UNKNOWN" ? 1 : 0,
-      needsHumanReview: 0,
+      runner: "npm test", result, exitCode, signal,
+      stdoutTail: tail(spawned.stdout), stderrTail: tail(spawned.stderr),
     },
-  );
+    ...runEvals(root),
+  ];
+  const summary = {
+    pass: results.filter(item => item.result === "PASS").length,
+    fail: results.filter(item => item.result === "FAIL").length,
+    unknown: results.filter(item => item.result === "UNKNOWN").length,
+    needsHumanReview: results.filter(item => item.result === "NEEDS_HUMAN_REVIEW").length,
+  };
+  return respond("test", root, results.every(item => item.result === "PASS") ? "completed" : "failed", results, summary);
 }
 
 function respond(

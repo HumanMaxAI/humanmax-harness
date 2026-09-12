@@ -384,3 +384,21 @@ test("dev runs the fixture through the harness", async () => {
   assert.equal(body.results[0]?.productionEnforcement, "unconfigured");
   assert.equal(body.results[0]?.writeExecuted, false);
 });
+
+test("humanmax test includes failing and unimplemented eval outcomes", async () => {
+  const dest = await project();
+  await writeFile(join(dest, "package.json"), JSON.stringify({ name: "eval-fixture", type: "module", scripts: { test: "node -e \"process.exit(0)\"" } }));
+  const evalPath = join(dest, "evals/gateway.eval.ts");
+  for (const [source, state] of [
+    ['throw new Error("EVAL_MUST_FAIL");', "FAIL"],
+    ['export const legacy = { resultWhenFailed: "FAIL" };', "UNKNOWN"],
+    ['export function evaluate() { return "NEEDS_HUMAN_REVIEW"; }', "NEEDS_HUMAN_REVIEW"],
+    ['export function evaluate() { return "PASS"; }', "PASS"],
+  ]) {
+    await writeFile(evalPath, source!);
+    const result = run(["test", "--format", "json"], dest);
+    assert.equal(result.status, state === "PASS" ? 0 : 1, result.stderr);
+    const body = JSON.parse(result.stdout);
+    assert.equal(body.results.find((r: { runner: string }) => r.runner === "eval")?.result, state);
+  }
+});

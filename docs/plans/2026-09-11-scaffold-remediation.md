@@ -15,6 +15,8 @@ Continue on `codex/cli-completion`. CLI/docs are already claimed. Generator/Core
 
 Each slice appends today's changelog and has a focused commit with attribution. Docs include a dated follow-up review with commands/exits and remaining gates. Human merge remains outstanding.
 
+2026-09-12 progress: slice 1 is implemented and verified in the [CLI eval review](../reviews/2026-09-12-cli-eval-verification.md). The existing generated eval stubs now correctly return UNKNOWN. Slices 2–4 still await generator/Core takeover authorization; the broader consumer acceptance in slice 5 is incomplete.
+
 ## Limits
 
 No public npm publishing, automatic production/CI claims, runtime schema implementation, added contracts, or full-template rewrite in this change. Keep the local-file dependency mode until actual public package install is proven. Structural mapping and host Skill discovery stay explicit outstanding work rather than silently approving a different design. Do not turn a TODO eval into PASS just to keep a fresh add green.
