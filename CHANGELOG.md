@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-12
+
+### Fixed
+
+- `humanmax test` now executes local evals alongside project tests. Missing/legacy implementations remain UNKNOWN, errors fail, and all four result states survive in CLI JSON; no unimplemented eval can count as a pass.
+
+### Added
+
+- Bounded per-file eval child processes with isolated result output and regression coverage for all states, exceptions, missing evidence and unsafe links.
+
 ## [Unreleased] - 2026-09-11
 
 ### Planned
