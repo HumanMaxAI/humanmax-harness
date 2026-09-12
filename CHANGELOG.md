@@ -10,6 +10,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 - Prepare the authorized CLI npm fix release, repair CI publication gates and registry/version handling, and verify the packed CLI against public dependencies before publication.
 
+### Fixed
+
+- Prepare `@humanmax/cli@0.1.1` for the argument validation, local project boundary and eval-result fixes recorded below. Legacy eval stubs now require implementation and return UNKNOWN; the candidate has not yet been published.
+- Make the main-only npm workflow valid by checking secret availability at step level. Unconfigured credentials explicitly skip publication.
+- Correct workspace version parsing, stop publication on registry errors, verify published versions, and add a read-only release preview plus regression tests.
+
 ## [Unreleased] - 2026-09-12
 
 ### Fixed
