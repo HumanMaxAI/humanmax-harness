@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-14
+
+### Planned
+
+- Repair generator npm dependencies and build/default-eval output, and verify packed candidates through a disposable npm registry before the main-only publish gate.
+
 ## [Unreleased] - 2026-09-13
 
 ### Planned
