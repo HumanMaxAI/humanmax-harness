@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-15
+
+### Fixed
+
+- Prepare generator 0.1.1 with pinned npm dependencies and a direct runtime dependency, so a new project no longer depends on its creator's checkout or npm cache. CLI and bootstrap require the fixed generator.
+- Emit an installed CLI npm script, pinned compiler/Node types, build/typecheck scripts and an executable default gateway eval. Preserve UNKNOWN for unimplemented added evals and all other Preview limitations.
+
+### Added
+
+- Packed-distribution CI verification using candidate tarballs and public npm dependencies, including bootstrap removal, clean install/ci, project relocation, compiled execution, the convenience wrapper and the full CLI loop.
+
 ## [Unreleased] - 2026-09-14
 
 ### Planned

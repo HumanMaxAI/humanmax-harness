@@ -2,7 +2,7 @@
 
 The project-pinned `humanmax` executable for the TypeScript `tool-agent` Preview. The CLI owns filesystem operations and invokes contracts, Core, and the generator; it does not reimplement assurance rules.
 
-From a generated project, invoke `./node_modules/.bin/humanmax <command>`. Help and version also work outside a project. Older generator output points `npm run humanmax` at an unpublished source file; use the installed binary until that generator script is corrected.
+From a project created by generator 0.1.1, invoke `npm run humanmax -- <command>` or `./node_modules/.bin/humanmax <command>`. Help and version also work outside a project. Generator 0.1.0 points its npm script at an unpublished source file; use the installed binary in those older projects.
 
 | Command | Behaviour |
 |---|---|
@@ -41,9 +41,12 @@ npm run build
 npm test -w @humanmax/cli
 npm run typecheck -w @humanmax/cli
 node packages/cli/verification/offline.mjs
+node packages/cli/verification/distribution.mjs
 ```
 
 The integration test creates a project, performs a real dependency install and exercises its compiled, project-pinned CLI through doctor, dev, add tool/eval, tests, generate/check, and upgrade preview. It compares complete project files around dry runs.
+
+The distribution proof packs the release candidates and installs them through a temporary loopback registry, using public npm for unchanged dependencies. It removes the bootstrap installation, installs and relocates the unmodified generated project, then verifies build/typecheck/start, compiled output, gateway evals and CLI commands. It also verifies the convenience wrapper and that an unimplemented added eval remains UNKNOWN. The repository generated-project CI job runs this proof before publishing. Set `HUMANMAX_KEEP_DISTRIBUTION=1` to retain its temporary tarballs and local logs.
 
 The offline proof runs on macOS using `sandbox-exec` with `deny network*`. An ordinary connection must succeed and the same connection must fail with EPERM/EACCES in the sandbox before `check` and `generate --check` can count as offline evidence. Other platforms return exit 2 and UNKNOWN; this script does not claim cross-platform network isolation. No project source or findings are uploaded to a HumanMax service.
 
@@ -66,4 +69,4 @@ Thrown/rejected evaluations and unsuccessful child exits are FAIL. A missing fun
 
 Limits: 64 top-level eval files, 256 KiB source per file, 1 MiB captured output, 10 seconds per child and 30 seconds for the complete eval phase. Children are not a sandbox; execute trusted local project code only. This convention does not add external evaluation providers or evidence services.
 
-Existing generator versions emit static eval objects. These now honestly report UNKNOWN until implemented; this CLI does not silently rewrite user-owned evals or their lock. The generator's planned executable gateway eval is separate pending work, as is Core's treatment of edited user-owned files.
+Generator 0.1.1 emits an executable default gateway eval. Generator 0.1.0 and newly added eval stubs emit static objects; these report UNKNOWN until implemented. This CLI does not silently rewrite user-owned evals or their lock. Core's treatment of edited user-owned files remains an open limitation.

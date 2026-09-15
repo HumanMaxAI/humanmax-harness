@@ -32,4 +32,4 @@ As of 2026-09-13, the six scoped packages have public `0.1.0` versions. This is 
 
 ## Not done by this workflow
 
-Switching generated projects from local `file:` dependencies to `^0.1.0` stays a separate change, after a public install of `@humanmax/cli` is confirmed.
+Generator 0.1.1 now defaults to fixed npm versions. The generated-project job verifies the candidate tarballs through a temporary registry before the publish job, including direct runtime installation and project independence. See the [dependency repair verification](../reviews/2026-09-15-npm-dependency-verification.md). Public npm verification of newly published versions still follows the actual release; a successful candidate test does not mean publication happened.

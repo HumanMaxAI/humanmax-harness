@@ -20,10 +20,10 @@ async function tree(root: string): Promise<Record<string, string>> {
   return result;
 }
 
-test("installed Preview loop exposes legacy eval stubs instead of passing them", async (t) => {
+test("installed Preview loop executes the default eval and exposes added eval stubs", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "humanmax-cli-loop-"));
   t.after(() => rm(root, { recursive: true, force: true }));
-  generateProject({ destination: root, name: "cli-loop", apply: true });
+  generateProject({ destination: root, name: "cli-loop", apply: true, dependencyMode: "local-file" });
   const install = spawnSync("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund"], { cwd: root, encoding: "utf8", timeout: 60_000 });
   assert.equal(install.status, 0, install.stderr);
   const pinned = join(root, "node_modules/.bin/humanmax");
@@ -49,8 +49,8 @@ test("installed Preview loop exposes legacy eval stubs instead of passing them",
   assert.equal(tested.results[0].result, "PASS");
   const evals = tested.results.filter((item: { runner: string }) => item.runner === "eval");
   assert.equal(evals.length, 2);
-  assert.ok(evals.every((item: { result: string }) => item.result === "UNKNOWN"));
-  assert.equal(tested.summary.unknown, 2);
+  assert.deepEqual(evals.map((item: { result: string }) => item.result), ["PASS", "UNKNOWN"]);
+  assert.equal(tested.summary.unknown, 1);
   assert.equal(run(["generate", "--check"]).summary.fail, 0);
   assert.equal(run(["check"]).summary.fail, 0);
   const before = await tree(root);

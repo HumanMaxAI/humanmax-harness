@@ -40,6 +40,6 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@humanmax/project-generator": "^0.1.0"
+    "@humanmax/project-generator": "^0.1.1"
   }
 }
