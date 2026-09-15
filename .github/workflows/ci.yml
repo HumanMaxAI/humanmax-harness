@@ -34,16 +34,8 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run build
-      - name: Create, install, test, and check a generated project
-        run: |
-          dest="$RUNNER_TEMP/demo-agent"
-          node --experimental-strip-types packages/create-humanmax-agent/src/cli.ts "$dest"
-          cd "$dest"
-          npm install
-          npm test
-          npm run humanmax -- doctor --format json
-          npm run humanmax -- check --format json
-          npm run humanmax -- generate --check --format json
+      - name: Verify packed bootstrap and independent generated project
+        run: node packages/cli/verification/distribution.mjs
 
   publish:
     needs: [workspace, generated-project]

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -37,23 +37,22 @@ function detail(label: string, result: ReturnType<typeof run>): string {
 /**
  * The install path is the product path, so it is exercised with a real
  * `npm install` rather than hand-written symlinks. The generated project has
- * only local `file:` dependencies, so this needs no registry round trip and
- * runs by default in `npm test`.
+ * explicit local `file:` harness dependencies and
+ * runs by default in `npm test`; compiler tooling is installed from npm.
  *
  * `tmpdir()` is deliberately not resolved through realpath here: on macOS it is
  * `/var/folders/...`, a symlink into `/private/var/...`, and that symlink hop is
  * exactly what used to break the emitted dependency paths.
  */
-test("a generated project installs, links the CLI bin, and passes its own tests", { timeout: 600_000 }, () => {
+test("a generated project installs, links the CLI bin, and passes its own tests", { timeout: 600_000 }, (t) => {
   const dest = join(mkdtempSync(join(tmpdir(), "humanmax-install-")), "demo-agent");
-  generateProject({ destination: dest, name: "demo-agent" });
+  t.after(() => rmSync(dest, { recursive: true, force: true }));
+  generateProject({ destination: dest, name: "demo-agent", dependencyMode: "local-file" });
 
   const install = run(["install"], dest);
   assert.equal(install.status, 0, detail("npm install", install));
 
-  // Top-level links must be real. Nested workspace packages still declare
-  // `@humanmax/*@0.0.0`, so `npm ls --all` reports UNMET until those packages
-  // are published. That is not the install-path bug this test exists to catch.
+  // Every explicit repository fixture dependency must resolve.
   for (const name of [
     "contracts",
     "runtime-harness",
@@ -69,6 +68,15 @@ test("a generated project installs, links the CLI bin, and passes its own tests"
     existsSync(join(dest, "node_modules", ".bin", "humanmax")),
     "node_modules/.bin/humanmax was not created",
   );
+
+  for (const script of ["build", "typecheck"]) {
+    const result = run(["run", script], dest);
+    assert.equal(result.status, 0, detail(script, result));
+  }
+  const compiled = spawnSync(process.execPath, ["dist/src/index.js"], { cwd: dest, encoding: "utf8" });
+  assert.equal(compiled.status, 0, compiled.stderr);
+  const evaluated = run(["run", "humanmax", "--", "test", "--format", "json"], dest);
+  assert.equal(evaluated.status, 0, detail("gateway eval", evaluated));
 
   const test_ = run(["test"], dest);
   assert.equal(test_.status, 0, detail("npm test", test_));
