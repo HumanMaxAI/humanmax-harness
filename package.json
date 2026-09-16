@@ -14,7 +14,7 @@
   "scripts": {
     "build": "node scripts/build-workspaces.mjs",
     "prepare": "node scripts/build-workspaces.mjs",
-    "test": "node scripts/check-scaffold.mjs && node --test scripts/co-author.test.mjs && npm run test --workspaces --if-present",
+    "test": "node scripts/check-scaffold.mjs && node --test scripts/*.test.mjs && npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {

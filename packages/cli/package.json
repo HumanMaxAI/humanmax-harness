@@ -1,6 +1,6 @@
 {
   "name": "@humanmax/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "license": "Apache-2.0",
   "description": "Project-pinned humanmax CLI for generated HumanMax Agent Harness projects.",
@@ -42,6 +42,6 @@
   "dependencies": {
     "@humanmax/contracts": "^0.1.0",
     "@humanmax/core": "^0.1.0",
-    "@humanmax/project-generator": "^0.1.0"
+    "@humanmax/project-generator": "^0.1.1"
   }
 }

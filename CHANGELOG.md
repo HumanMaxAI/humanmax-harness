@@ -4,6 +4,75 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-15
+
+### Fixed
+
+- Prepare generator 0.1.1 with pinned npm dependencies and a direct runtime dependency, so a new project no longer depends on its creator's checkout or npm cache. CLI and bootstrap require the fixed generator.
+- Emit an installed CLI npm script, pinned compiler/Node types, build/typecheck scripts and an executable default gateway eval. Preserve UNKNOWN for unimplemented added evals and all other Preview limitations.
+
+### Added
+
+- Packed-distribution CI verification using candidate tarballs and public npm dependencies, including bootstrap removal, clean install/ci, project relocation, compiled execution, the convenience wrapper and the full CLI loop.
+
+## [Unreleased] - 2026-09-14
+
+### Planned
+
+- Repair generator npm dependencies and build/default-eval output, and verify packed candidates through a disposable npm registry before the main-only publish gate.
+
+## [Unreleased] - 2026-09-13
+
+### Planned
+
+- Prepare the authorized CLI npm fix release, repair CI publication gates and registry/version handling, and verify the packed CLI against public dependencies before publication.
+
+### Fixed
+
+- Prepare `@humanmax/cli@0.1.1` for the argument validation, local project boundary and eval-result fixes recorded below. Legacy eval stubs now require implementation and return UNKNOWN; the candidate has not yet been published.
+- Make the main-only npm workflow valid by checking secret availability at step level. Unconfigured credentials explicitly skip publication.
+- Correct workspace version parsing, stop publication on registry errors, verify published versions, and add a read-only release preview plus regression tests.
+
+## [Unreleased] - 2026-09-12
+
+### Fixed
+
+- `humanmax test` now executes local evals alongside project tests. Missing/legacy implementations remain UNKNOWN, errors fail, and all four result states survive in CLI JSON; no unimplemented eval can count as a pass.
+
+### Added
+
+- Bounded per-file eval child processes with isolated result output and regression coverage for all states, exceptions, missing evidence and unsafe links.
+
+## [Unreleased] - 2026-09-11
+
+### Planned
+
+- Remediate the locally reproduced generated-build, eval execution, upgrade coverage and user-owned integrity gaps; preserve outstanding structural and distribution gates.
+
+### Added
+
+- Fresh generated-scaffold acceptance review: local CLI loop passes, but generated build/types, eval execution, upgrade completeness, add-tool docs, portability and structural conformance remain incomplete.
+
+- Real generated-install integration coverage for the complete pinned Preview CLI loop, plus a macOS OS-network-denial proof for `check` and `generate --check` with positive and negative network controls.
+- CLI command, output, exit-code, filesystem-boundary and verification documentation.
+
+### Fixed
+
+- `doctor` validates canonical declarations and reports Core findings; `dev` validates agent/tool references before loading application code. Missing generator evidence fails `generate --check` without promoting UNKNOWN to PASS.
+- CLI pack prechecks, response digests, add plans, and upgrade previews reject unsafe file paths; malformed generator locks and existing component outputs are refused before writes.
+- `dev` runs the fixture in a child process with bounded time/output and a separate result channel, keeping application logs out of JSON. Configuration failures from parsed JSON requests now return a failed CLI envelope.
+- Terminal command output includes results and planned file paths.
+
+## [Unreleased] - 2026-09-10
+
+### Fixed
+
+- CLI arguments now reject unknown, duplicate, incompatible, or missing-value options before writes, validate effect classes, and preserve positionals around boolean flags. Help and version succeed outside projects.
+
+### Added
+
+- CLI completion plan covering strict arguments, project diagnostics, guarded execution, and generated-project/offline verification within Preview.
+
 ## [Unreleased] - 2026-09-02
 
 ### Added
