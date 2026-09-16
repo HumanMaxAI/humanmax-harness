@@ -2,20 +2,11 @@ import { realpathSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-/**
- * Every `@humanmax/*` dependency specifier a generated project receives is
- * produced here. Nothing else in the generator builds one.
- *
- * Preview emits local `file:` specifiers that point at the harness checkout
- * which ran the generator, because no `@humanmax/*` package is published yet
- * — all of those names currently 404 on the public registry. When they are
- * published, set `DEPENDENCY_MODE` to `"published"` and set
- * `PUBLISHED_VERSION_RANGE`. That is the whole switch.
- */
-export const DEPENDENCY_MODE: "local-file" | "published" = "local-file";
-
-/** Only read when `DEPENDENCY_MODE` is `"published"`. */
-export const PUBLISHED_VERSION_RANGE = "^0.1.0";
+/** Published projects must install independently of the machine that created them. */
+export type DependencyMode = "published" | "local-file";
+const PUBLISHED_VERSIONS: Record<string, string> = {
+  contracts: "0.1.0", "runtime-harness": "0.1.0", cli: "0.1.1",
+};
 
 /** Directory names under `packages/`, which are also the npm name suffixes. */
 export const RUNTIME_PACKAGES = ["contracts", "runtime-harness"] as const;
@@ -35,12 +26,12 @@ export type HarnessDependencies = {
  * dangling `node_modules/@humanmax/*` symlinks and no `node_modules/.bin`,
  * while `npm install` still exits 0.
  */
-export function harnessDependencies(destination: string): HarnessDependencies {
+export function harnessDependencies(destination: string, mode: DependencyMode = "published"): HarnessDependencies {
   return {
-    dependencies: specifiers(destination, RUNTIME_PACKAGES),
+    dependencies: specifiers(destination, RUNTIME_PACKAGES, mode),
     devDependencies: {
-      ...specifiers(destination, DEV_PACKAGES),
-      ...specifiers(destination, TRANSITIVE_PACKAGES),
+      ...specifiers(destination, DEV_PACKAGES, mode),
+      ...(mode === "local-file" ? specifiers(destination, TRANSITIVE_PACKAGES, mode) : {}),
     },
   };
 }
@@ -48,17 +39,20 @@ export function harnessDependencies(destination: string): HarnessDependencies {
 function specifiers(
   destination: string,
   packages: readonly string[],
+  mode: DependencyMode,
 ): Record<string, string> {
   const entries: Record<string, string> = {};
   for (const name of packages) {
-    entries[`@humanmax/${name}`] = dependencySpecifier(destination, name);
+    entries[`@humanmax/${name}`] = dependencySpecifier(destination, name, mode);
   }
   return entries;
 }
 
-function dependencySpecifier(destination: string, name: string): string {
-  if (DEPENDENCY_MODE === "published") {
-    return PUBLISHED_VERSION_RANGE;
+function dependencySpecifier(destination: string, name: string, mode: DependencyMode): string {
+  if (mode === "published") {
+    const version = PUBLISHED_VERSIONS[name];
+    if (!version) throw new Error(`No published version configured for ${name}`);
+    return version;
   }
   const target = join(harnessPackagesRoot(), name);
   const rel = relative(realPath(destination), target);

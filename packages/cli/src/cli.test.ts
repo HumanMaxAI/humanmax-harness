@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, realpath, symlink } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, symlink, readdir, unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -26,6 +26,156 @@ async function project(): Promise<string> {
   generateProject({ destination: dest, name: "demo-agent", apply: true });
   return dest;
 }
+
+async function tree(root: string): Promise<Record<string, string>> {
+  const files: Record<string, string> = {};
+  for (const path of await readdir(root, { recursive: true, withFileTypes: true })) {
+    if (path.isFile()) {
+      const full = join(path.parentPath, path.name);
+      files[full.slice(root.length)] = await readFile(full, "utf8");
+    }
+  }
+  return files;
+}
+
+test("help and version succeed without a project", () => {
+  for (const args of [["--help"], ["add", "--help"], ["--version"], ["doctor", "--version"]]) {
+    const result = run(args, tmpdir());
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(result.stdout.length > 0);
+    assert.equal(result.stderr, "");
+  }
+});
+
+test("boolean flags do not consume command positionals", async () => {
+  const dest = await project();
+  const before = await tree(dest);
+  const result = run(["--dry-run", "add", "tool", "ordered-read", "--format=json", "--effect=read"], dest);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).command, "add tool");
+  assert.deepEqual(await tree(dest), before);
+});
+
+test("invalid arguments fail before any project writes", async () => {
+  const dest = await project();
+  const before = await tree(dest);
+  const cases = [
+    ["check", "--typo"], ["check", "extra"], ["check", "--dry-run"],
+    ["add", "tool", "bad-effect", "--effect", "network"],
+    ["add", "tool", "missing-value", "--effect", "--dry-run"],
+    ["add", "eval", "bad-eval", "--effect", "read"],
+    ["add", "eval", "bad-eval", "extra"],
+    ["add", "eval", "bad-eval", "--dry-run", "--apply"],
+    ["add", "eval", "../outside"],
+    ["check", "--format", "json", "--format", "terminal"],
+    ["generate", "--check", "--apply"],
+    ["upgrade", "--dry-run", "--to", "9.0.0"],
+  ];
+  for (const args of cases) {
+    const result = run(args, dest);
+    assert.equal(result.status, 2, `${args.join(" ")}: ${result.stderr}`);
+    assert.deepEqual(await tree(dest), before, args.join(" "));
+  }
+});
+
+test("doctor fails invalid declarations and reports pack trust failures", async () => {
+  const dest = await project();
+  const path = join(dest, ".humanmax/project.yaml");
+  const original = await readFile(path, "utf8");
+  await writeFile(path, original.replace("productionEnforcement: unconfigured", "productionEnforcement: enforced"));
+  const invalid = run(["doctor", "--format", "json"], dest);
+  assert.notEqual(invalid.status, 0);
+  assert.notEqual(JSON.parse(invalid.stdout).status, "completed");
+  await writeFile(path, original);
+  const pack = join(dest, ".humanmax/packs.lock");
+  await writeFile(pack, (await readFile(pack, "utf8")).replace(/digest: sha256:[0-9a-f]+/, `digest: sha256:${"0".repeat(64)}`));
+  assert.equal(run(["doctor", "--format", "json"], dest).status, 3);
+});
+
+test("dev validates canonical agents before loading application code", async () => {
+  const dest = await project();
+  await writeFile(join(dest, "src/index.ts"), 'throw new Error("APPLICATION_WAS_LOADED");\n');
+  const path = join(dest, ".humanmax/agents/default.agent.yaml");
+  await writeFile(path, (await readFile(path, "utf8")).replace("- knowledge-read", "- undeclared-tool"));
+  const result = run(["dev", "--format", "json"], dest);
+  assert.equal(result.status, 2, result.stderr);
+  assert.doesNotMatch(result.stderr, /APPLICATION_WAS_LOADED/);
+  assert.match(result.stderr, /undeclared-tool/);
+});
+
+test("generate check fails when generator evidence is absent", async () => {
+  const dest = await project();
+  await unlink(join(dest, ".humanmax/generator.lock"));
+  const result = run(["generate", "--check", "--format", "json"], dest);
+  assert.notEqual(result.status, 0);
+  const body = JSON.parse(result.stdout);
+  assert.ok(body.summary.unknown > 0);
+});
+
+test("add refuses existing user-owned output files without partial writes", async () => {
+  const dest = await project();
+  await writeFile(join(dest, "tests/collision.test.ts"), "// user-owned test\n");
+  const before = await tree(dest);
+  const result = run(["add", "tool", "collision", "--effect", "read", "--format", "json"], dest);
+  assert.equal(result.status, 2, result.stderr);
+  assert.deepEqual(await tree(dest), before);
+});
+
+test("pack prechecks refuse symlinks without reading their target", async () => {
+  const dest = await project();
+  const secret = join(await mkdtemp(join(tmpdir(), "humanmax-outside-")), "private.yaml");
+  await writeFile(secret, 'sensitive: "DO_NOT_DISCLOSE\n');
+  await unlink(join(dest, ".humanmax/packs.lock"));
+  await symlink(secret, join(dest, ".humanmax/packs.lock"));
+  const result = run(["check", "--format", "json"], dest);
+  assert.equal(result.status, 3);
+  assert.match(result.stderr, /symbolic link/);
+  assert.doesNotMatch(result.stdout + result.stderr, /DO_NOT_DISCLOSE/);
+});
+
+test("terminal previews list the planned files", async () => {
+  const dest = await project();
+  const result = run(["add", "eval", "visible-eval", "--dry-run"], dest);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /evals\/visible-eval.eval.ts/);
+});
+
+test("dev keeps application logs outside the JSON envelope", async () => {
+  const dest = await project();
+  await writeFile(join(dest, "src/index.ts"), 'console.log("application log"); export async function runFixture() { console.log("fixture log"); return { productionEnforcement: "unconfigured" }; }\n');
+  const result = run(["dev", "--format", "json"], dest);
+  assert.equal(result.status, 0, result.stderr);
+  const body = JSON.parse(result.stdout);
+  assert.equal(body.results[0].productionEnforcement, "unconfigured");
+  assert.doesNotMatch(result.stdout, /application log|fixture log/);
+});
+
+test("JSON configuration errors are machine-readable with nonzero exit", async () => {
+  const result = run(["check", "--format", "json"], tmpdir());
+  assert.equal(result.status, 2);
+  const body = JSON.parse(result.stdout);
+  assert.equal(body.kind, "CliResponse");
+  assert.equal(body.status, "failed");
+  assert.equal(body.summary.pass, 0);
+});
+
+test("add rejects a malformed generator lock before writing components", async () => {
+  const dest = await project();
+  await writeFile(join(dest, ".humanmax/generator.lock"), '{"files":42}\n');
+  const before = await tree(dest);
+  const result = run(["add", "eval", "bad-lock", "--format", "json"], dest);
+  assert.equal(result.status, 2, result.stderr);
+  assert.deepEqual(await tree(dest), before);
+});
+
+test("upgrade refuses untracked symlink targets before reading a plan", async () => {
+  const dest = await project();
+  await unlink(join(dest, ".humanmax/generator.lock"));
+  await unlink(join(dest, "src/index.ts"));
+  await symlink(join(dest, "README.md"), join(dest, "src/index.ts"));
+  const result = run(["upgrade", "--dry-run", "--format", "json"], dest);
+  assert.equal(result.status, 2, result.stderr);
+});
 
 test("preview CLI surface stays thin", () => {
   assert.deepEqual(previewCommands(), [
@@ -233,4 +383,22 @@ test("dev runs the fixture through the harness", async () => {
   assert.equal(body.results[0]?.write, "review");
   assert.equal(body.results[0]?.productionEnforcement, "unconfigured");
   assert.equal(body.results[0]?.writeExecuted, false);
+});
+
+test("humanmax test includes failing and unimplemented eval outcomes", async () => {
+  const dest = await project();
+  await writeFile(join(dest, "package.json"), JSON.stringify({ name: "eval-fixture", type: "module", scripts: { test: "node -e \"process.exit(0)\"" } }));
+  const evalPath = join(dest, "evals/gateway.eval.ts");
+  for (const [source, state] of [
+    ['throw new Error("EVAL_MUST_FAIL");', "FAIL"],
+    ['export const legacy = { resultWhenFailed: "FAIL" };', "UNKNOWN"],
+    ['export function evaluate() { return "NEEDS_HUMAN_REVIEW"; }', "NEEDS_HUMAN_REVIEW"],
+    ['export function evaluate() { return "PASS"; }', "PASS"],
+  ]) {
+    await writeFile(evalPath, source!);
+    const result = run(["test", "--format", "json"], dest);
+    assert.equal(result.status, state === "PASS" ? 0 : 1, result.stderr);
+    const body = JSON.parse(result.stdout);
+    assert.equal(body.results.find((r: { runner: string }) => r.runner === "eval")?.result, state);
+  }
 });

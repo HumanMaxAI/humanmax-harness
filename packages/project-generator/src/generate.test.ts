@@ -18,6 +18,28 @@ test("preview default path does not include sg-core", () => {
   assert.equal(options.language, "typescript");
 });
 
+test("default output installs published runtime dependencies without a checkout", () => {
+  const files = generateProject({ destination: "/tmp/npm-consumer", name: "npm-consumer", dryRun: true }).files;
+  const manifest = JSON.parse(files.find(f => f.path === "package.json")!.contents);
+  assert.deepEqual(manifest.dependencies, {
+    "@humanmax/contracts": "0.1.0",
+    "@humanmax/runtime-harness": "0.1.0",
+  });
+  assert.equal(manifest.devDependencies["@humanmax/cli"], "0.1.1");
+  assert.equal(manifest.devDependencies.typescript, "5.9.2");
+  assert.equal(manifest.devDependencies["@types/node"], "22.18.0");
+  assert.equal(manifest.overrides, undefined);
+  assert.doesNotMatch(JSON.stringify(manifest), /file:|\/src\/cli\.ts/);
+  assert.equal(manifest.scripts.humanmax, "humanmax");
+  assert.equal(manifest.scripts.build, "tsc -p tsconfig.json");
+  assert.equal(manifest.scripts.typecheck, "tsc -p tsconfig.json --noEmit");
+  const tsconfig = JSON.parse(files.find(f => f.path === "tsconfig.json")!.contents);
+  assert.equal(tsconfig.compilerOptions.noEmit, undefined);
+  assert.equal(tsconfig.compilerOptions.outDir, "dist");
+  assert.equal(tsconfig.compilerOptions.rewriteRelativeImportExtensions, true);
+  assert.match(files.find(f => f.path === "evals/gateway.eval.ts")!.contents, /export async function evaluate/);
+});
+
 test("dry-run reports files and writes nothing", async () => {
   const dest = await emptyDir();
   const plan = generateProject({
@@ -71,6 +93,7 @@ test("every emitted file: dependency resolves to a real harness package", async 
     destination: dest,
     name: "demo-agent",
     dryRun: true,
+    dependencyMode: "local-file",
   });
   const manifest = JSON.parse(
     plan.files.find((file) => file.path === "package.json")?.contents ?? "{}",
@@ -80,7 +103,7 @@ test("every emitted file: dependency resolves to a real harness package", async 
     ...manifest.devDependencies,
   } as Record<string, string>;
 
-  assert.deepEqual(Object.keys(specifiers).sort(), [
+  assert.deepEqual(Object.keys(specifiers).filter(name => name.startsWith("@humanmax/")).sort(), [
     "@humanmax/cli",
     "@humanmax/contracts",
     "@humanmax/core",
@@ -89,7 +112,7 @@ test("every emitted file: dependency resolves to a real harness package", async 
     "@humanmax/runtime-harness",
   ]);
 
-  for (const [name, specifier] of Object.entries(specifiers)) {
+  for (const [name, specifier] of Object.entries(specifiers).filter(([name]) => name.startsWith("@humanmax/"))) {
     assert.ok(specifier.startsWith("file:"), `${name} is not a file: specifier`);
     const target = specifier.slice("file:".length);
     assert.equal(isAbsolute(target), false, `${name} must stay relative`);
