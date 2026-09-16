@@ -4,9 +4,9 @@
 
 Harness publishes Preview packages from GitHub Actions on `main` only. The `publish` job runs after `workspace` (test, typecheck, `npm audit --audit-level=high`) and `generated-project`. A pull request never publishes.
 
-## Repository secret
+## Environment secret
 
-Set `NPM_TOKEN` on `HumanMaxAI/humanmax-harness` (Settings → Secrets and variables → Actions).
+Set `NPM_TOKEN` on `HumanMaxAI/humanmax-harness` under Settings → Environments → **prod** → Environment secrets. The `publish` job references `environment: prod` so GitHub supplies that environment's secret after any configured environment protections pass. The quality jobs do not reference this environment.
 
 The token must be an npm **granular access token** with:
 
@@ -14,7 +14,9 @@ The token must be an npm **granular access token** with:
 - Bypass 2FA
 - Packages: `@humanmax/*`, `humanmax`, `create-humanmax-agent`
 
-CI maps it to `NODE_AUTH_TOKEN`. Do not put the token in the repository, in `.env` that gets committed, or in workflow logs.
+CI maps it to `NODE_AUTH_TOKEN`. A missing token fails the publish job with a configuration error; a green workflow must not silently skip publication for missing credentials. Do not put the token in the repository, in `.env` that gets committed, or in workflow logs.
+
+Changes to the workflow take effect on a new main run after merge. Re-running a run from an older commit still uses that commit's workflow and does not pick up the environment binding.
 
 ## Idempotence
 
