@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-16
+
+### Fixed
+
+- Bind the main-only npm publish job to the existing `prod` environment so it can access `NPM_TOKEN`. Missing credentials now fail visibly instead of producing a successful workflow with publication skipped.
+
 ## [Unreleased] - 2026-09-15
 
 ### Fixed
