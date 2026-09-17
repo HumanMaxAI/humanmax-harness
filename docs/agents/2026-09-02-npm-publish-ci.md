@@ -30,6 +30,8 @@ node scripts/publish-workspaces.mjs --dry-run
 
 The script unwraps npm's workspace-name/version map, resolves all registry lookups before publishing, treats only E404 as absent, and verifies the resulting registry version after publication. Authentication and network failures stop the release. The workflow checks secret availability in a step; secrets are not supported in its job-level condition.
 
+The npm registry may briefly return E404 after accepting a publish. Post-publish exact-version verification retries that absence for up to two minutes without publishing the package again. Other lookup errors remain immediate failures. If the version is still absent after the bounded wait, the release stops and reports the publish exit status plus the verification window.
+
 As of 2026-09-13, the six scoped packages have public `0.1.0` versions. This is not evidence that the generated-project distribution works: see the [release candidate verification](../reviews/2026-09-13-npm-release-candidate.md). `create-humanmax-agent` and `humanmax` return E404, and the prepared CLI version is `0.1.1`. Do not treat a dry-run plan as permission to publish the remaining scaffold packages before their acceptance gaps are resolved.
 
 ## Not done by this workflow

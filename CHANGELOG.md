@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-17
+
+### Fixed
+
+- Retry exact-version verification after a successful npm publish while registry metadata propagates. The retry is bounded and still fails immediately for authentication, network and malformed registry responses.
+
 ## [Unreleased] - 2026-09-16
 
 ### Fixed
