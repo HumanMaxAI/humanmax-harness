@@ -2,16 +2,19 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { publishWorkspaces } from "./publish-workspaces.mjs";
 
-function registry({ existing = false, error, publishFails = false } = {}) {
+function registry({ existing = false, error, publishFails = false, visibilityDelay = 0 } = {}) {
   const calls = [];
   let published = false;
+  let postPublishLookups = 0;
   return { calls, run(args) {
     calls.push(args);
     if (args[0] === "pkg") return { status: 0, stdout: JSON.stringify({ "@humanmax/cli": "0.1.1" }) };
     if (args[0] === "view") {
       assert.equal(args[1], "@humanmax/cli@0.1.1");
       if (error) return { status: 1, stdout: JSON.stringify({ error: { code: error } }) };
-      return existing || published ? { status: 0, stdout: '"0.1.1"' }
+      if (published) postPublishLookups += 1;
+      const visible = published && postPublishLookups > visibilityDelay;
+      return existing || visible ? { status: 0, stdout: '"0.1.1"' }
         : { status: 1, stdout: '{"error":{"code":"E404"}}' };
     }
     if (args[0] === "publish") {
@@ -52,7 +55,33 @@ test("a missing version is published once and verified", () => {
   assert.equal(fake.calls.filter(c => c[0] === "publish").length, 1);
   assert.equal(fake.calls.at(-1)[0], "view");
 });
+test("post-publish verification tolerates bounded registry propagation", () => {
+  const fake = registry({ visibilityDelay: 2 });
+  let waits = 0;
+  publishWorkspaces({ ...fake, names, log() {}, verificationAttempts: 4, wait() { waits += 1; } });
+  assert.equal(fake.calls.filter(c => c[0] === "publish").length, 1);
+  assert.equal(fake.calls.filter(c => c[0] === "view").length, 4);
+  assert.equal(waits, 2);
+});
+test("successful publishes stop after the bounded propagation window", () => {
+  const fake = registry({ visibilityDelay: Number.POSITIVE_INFINITY });
+  let waits = 0;
+  assert.throws(
+    () => publishWorkspaces({ ...fake, names, log() {}, verificationAttempts: 3, verificationDelayMs: 10, wait() { waits += 1; } }),
+    /npm publish returned exit 0.*registry did not expose.*3 checks/,
+  );
+  assert.equal(fake.calls.filter(c => c[0] === "publish").length, 1);
+  assert.equal(fake.calls.filter(c => c[0] === "view").length, 4);
+  assert.equal(waits, 2);
+});
 test("failed publishes cannot be reported as successful", () => {
   const fake = registry({ publishFails: true });
-  assert.throws(() => publishWorkspaces({ ...fake, names, log() {} }), /publish failed/);
+  let waits = 0;
+  assert.throws(
+    () => publishWorkspaces({ ...fake, names, log() {}, verificationAttempts: 3, wait() { waits += 1; } }),
+    /npm publish failed.*exit 1/,
+  );
+  assert.equal(fake.calls.filter(c => c[0] === "publish").length, 1);
+  assert.equal(fake.calls.filter(c => c[0] === "view").length, 2);
+  assert.equal(waits, 0);
 });
