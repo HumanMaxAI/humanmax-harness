@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { publishWorkspaces } from "./publish-workspaces.mjs";
 
-function registry({ existing = false, error, publishFails = false, visibilityDelay = 0 } = {}) {
+function registry({ existing = false, error, publishFails = false, publishStderr = "", visibilityDelay = 0 } = {}) {
   const calls = [];
   let published = false;
   let postPublishLookups = 0;
@@ -18,7 +18,7 @@ function registry({ existing = false, error, publishFails = false, visibilityDel
         : { status: 1, stdout: '{"error":{"code":"E404"}}' };
     }
     if (args[0] === "publish") {
-      if (publishFails) return { status: 1, stdout: "" };
+      if (publishFails) return { status: 1, stdout: "", stderr: publishStderr };
       published = true;
       return { status: 0, stdout: "" };
     }
@@ -82,12 +82,26 @@ test("successful publishes stop after the bounded propagation window", () => {
   assert.equal(waits, 2);
 });
 test("failed publishes cannot be reported as successful", () => {
-  const fake = registry({ publishFails: true });
+  const token = `npm_${"a".repeat(40)}`;
+  const fake = registry({
+    publishFails: true,
+    publishStderr: `${"discard-me ".repeat(600)}\nnpm error code E403\nnpm error token ${token}\n_authToken=plain-secret\nAuthorization: Bearer bearer-secret\nNODE_AUTH_TOKEN=env-secret`,
+  });
   let waits = 0;
-  assert.throws(
-    () => publishWorkspaces({ ...fake, names, log() {}, verificationAttempts: 3, wait() { waits += 1; } }),
-    /npm publish failed.*exit 1/,
-  );
+  let failure;
+  try {
+    publishWorkspaces({ ...fake, names, log() {}, verificationAttempts: 3, wait() { waits += 1; } });
+  } catch (error) {
+    failure = error;
+  }
+  assert.ok(failure instanceof Error);
+  assert.match(failure.message, /npm publish failed.*exit 1.*npm error code E403/s);
+  assert.match(failure.message, /\[REDACTED\]/);
+  assert.doesNotMatch(failure.message, new RegExp(token));
+  for (const secret of ["plain-secret", "bearer-secret", "env-secret"]) {
+    assert.doesNotMatch(failure.message, new RegExp(secret));
+  }
+  assert.ok(failure.message.length < 5_000, "npm diagnostic must be bounded");
   assert.equal(fake.calls.filter(c => c[0] === "publish").length, 1);
   assert.equal(fake.calls.filter(c => c[0] === "view").length, 2);
   assert.equal(waits, 0);
