@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-02
 
-Harness publishes Preview packages from GitHub Actions on `main` only. The `publish` job runs after `workspace` (test, typecheck, `npm audit --audit-level=high`) and `generated-project`. A pull request never publishes.
+Harness publishes Preview packages from GitHub Actions on `main` only. The `publish` job runs after `workspace` (test, typecheck, `npm audit --audit-level=low`) and `generated-project`. The audit threshold makes any known npm advisory fail the prerequisite job. A pull request never publishes.
 
 ## Environment secret
 

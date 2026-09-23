@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 ### Fixed
 
 - Extend post-publish npm exact-version verification to three minutes after CLI 0.1.1 became visible just beyond the former two-minute bound.
+- Block npm publication when the committed dependency graph has an npm advisory at any severity, including low and moderate findings.
 
 ## [Unreleased] - 2026-09-17
 
