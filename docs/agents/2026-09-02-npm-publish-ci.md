@@ -12,7 +12,9 @@ The token must be an npm **granular access token** with:
 
 - Read and write
 - Bypass 2FA
-- Packages: `@humanmax/*`, `humanmax`, `create-humanmax-agent`
+- Packages and scopes: **All Packages** for the first publication of `create-humanmax-agent` and `humanmax`
+
+The two bootstrap names are unscoped and do not exist before their initial release. A token limited to the `@humanmax` scope can publish scoped packages but cannot create these unscoped packages. After both initial versions exist, rotate the GitHub secret to a token narrowed to the `@humanmax` scope plus the two exact packages if the npm token UI permits that selection.
 
 CI maps it to `NODE_AUTH_TOKEN`. A missing token fails the publish job with a configuration error; a green workflow must not silently skip publication for missing credentials. Do not put the token in the repository, in `.env` that gets committed, or in workflow logs.
 
@@ -32,7 +34,9 @@ The script unwraps npm's workspace-name/version map, resolves all registry looku
 
 The npm registry may briefly return E404 after accepting a publish. Post-publish exact-version verification retries that absence for up to three minutes without publishing the package again. Other lookup errors remain immediate failures. If the version is still absent after the bounded wait, the release stops and reports the publish exit status plus the verification window. The three-minute bound covers the observed CLI 0.1.1 propagation, which completed just after the former two-minute window expired.
 
-As of 2026-09-23, the four library packages have public `0.1.0` versions, and `@humanmax/project-generator` plus `@humanmax/cli` have public `0.1.1` versions. `create-humanmax-agent` and `humanmax` still return E404 because the CLI verification timeout stopped their publication. The generated-project candidate verification is documented in the [release candidate verification](../reviews/2026-09-13-npm-release-candidate.md); public verification of the remaining entry packages still depends on a successful main workflow.
+As of 2026-09-23, the four library packages have public `0.1.0` versions, and `@humanmax/project-generator` plus `@humanmax/cli` have public `0.1.1` versions. `create-humanmax-agent` and `humanmax` still return E404. The generated-project candidate verification is documented in the [release candidate verification](../reviews/2026-09-13-npm-release-candidate.md); public verification of the remaining entry packages still depends on a successful main workflow.
+
+The next main run reached `create-humanmax-agent@0.1.0`, where npm rejected the publish with exit 1. The merged publisher discarded npm stderr, so that run cannot establish the exact registry code. Scoped publication with the same secret had already succeeded, making a token restricted to `@humanmax` the leading diagnosis. New failures include bounded, credential-redacted npm output so the next run can confirm it.
 
 ## Not done by this workflow
 
