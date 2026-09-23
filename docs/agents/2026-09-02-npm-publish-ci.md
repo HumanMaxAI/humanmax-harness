@@ -2,7 +2,9 @@
 
 **Date:** 2026-09-02
 
-Harness publishes Preview packages from GitHub Actions on `main` only. The `publish` job runs after `workspace` (test, typecheck, `npm audit --audit-level=low`) and `generated-project`. The audit threshold makes any known npm advisory fail the prerequisite job. A pull request never publishes.
+Harness publishes Preview packages from GitHub Actions on `main` only. The `publish` job runs after `workspace` (test, typecheck, `npm audit --audit-level=low`), `generated-project`, and `codeql`. The audit threshold makes any known npm advisory fail the prerequisite job. CodeQL runs `security-extended` queries for JavaScript/TypeScript and GitHub Actions; a fail-closed SARIF gate blocks publication on any alert or missing/malformed report. A pull request never publishes.
+
+The CodeQL job has only `contents: read` and `security-events: write`. It does not reference the `prod` environment or `NPM_TOKEN`. This public repository is eligible for GitHub code scanning. If Default setup is already enabled in repository settings, disable it or switch to Advanced setup before using the checked-in CodeQL workflow; GitHub rejects duplicate CodeQL uploads from both setup modes.
 
 ## Environment secret
 

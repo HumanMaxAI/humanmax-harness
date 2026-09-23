@@ -4,7 +4,7 @@ Scope: all eight npm workspace package candidates and the main-only publication 
 
 ## Verdict
 
-READY for human review and the existing main-only release process. The committed dependency graph has no npm advisory at any severity as of this review. The candidate archives contain only declared package files, have no install-time lifecycle script, and installed together successfully with scripts disabled.
+READY for CodeQL validation and human review. The committed dependency graph has no npm advisory at any severity as of this review. The candidate archives contain only declared package files, have no install-time lifecycle script, and installed together successfully with scripts disabled. First-party SAST remains UNKNOWN until the new GitHub CodeQL job completes successfully.
 
 This evidence does not prove that first-party code has no unknown vulnerability. npm audit reports known dependency advisories, and static inspection cannot establish the absence of every defect. The release gate therefore states the narrower property it can enforce: zero known npm advisories at publication time.
 
@@ -35,7 +35,9 @@ All eight tarballs were installed together into an isolated consumer with `--ign
 
 ## Release gate
 
-The workspace job now runs `npm audit --audit-level=low`. Its regression test also verifies that publication still depends on both the workspace and generated-project jobs. This blocks main publication for any npm advisory severity while preserving the existing generated-project distribution gate and `prod` environment secret boundary.
+The workspace job now runs `npm audit --audit-level=low`. Its regression test verifies that publication depends on the workspace, generated-project and CodeQL jobs. This blocks main publication for any npm advisory severity while preserving the generated-project distribution gate and `prod` environment secret boundary.
+
+The release workflow now also runs CodeQL Action v4 for `javascript-typescript` and `actions` with `build-mode: none` and the `security-extended` query suite. CodeQL results are uploaded to GitHub, then a bounded SARIF checker fails closed when reports are absent, malformed, or contain any result. Publication depends on both matrix analyses. The SAST job receives no npm secret and is not attached to the `prod` environment.
 
 ## Residual risk
 
