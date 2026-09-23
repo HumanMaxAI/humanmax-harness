@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-23
+
+### Fixed
+
+- Extend post-publish npm exact-version verification to three minutes after CLI 0.1.1 became visible just beyond the former two-minute bound.
+
 ## [Unreleased] - 2026-09-17
 
 ### Fixed
