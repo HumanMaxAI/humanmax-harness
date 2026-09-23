@@ -14,7 +14,7 @@ const ORDER = [
 ];
 
 const REGISTRY = "https://registry.npmjs.org";
-const DEFAULT_VERIFICATION_ATTEMPTS = 25;
+const DEFAULT_VERIFICATION_ATTEMPTS = 37;
 const DEFAULT_VERIFICATION_DELAY_MS = 5_000;
 function npm(args) {
   return spawnSync("npm", args, { encoding: "utf8", timeout: 120_000, maxBuffer: 8 * 1024 * 1024 });

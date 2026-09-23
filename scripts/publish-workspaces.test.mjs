@@ -63,6 +63,13 @@ test("post-publish verification tolerates bounded registry propagation", () => {
   assert.equal(fake.calls.filter(c => c[0] === "view").length, 4);
   assert.equal(waits, 2);
 });
+test("default verification covers registry propagation beyond two minutes", () => {
+  const fake = registry({ visibilityDelay: 26 });
+  let waits = 0;
+  publishWorkspaces({ ...fake, names, log() {}, wait() { waits += 1; } });
+  assert.equal(fake.calls.filter(c => c[0] === "publish").length, 1);
+  assert.equal(waits, 26);
+});
 test("successful publishes stop after the bounded propagation window", () => {
   const fake = registry({ visibilityDelay: Number.POSITIVE_INFINITY });
   let waits = 0;
