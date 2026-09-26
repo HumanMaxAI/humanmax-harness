@@ -26,13 +26,18 @@ export function projectPath(root: string, path: string): string {
 
 export function readProjectFile(root: string, path: string): string | undefined {
   const full = projectPath(root, path);
-  const stat = lstatSync(full, { throwIfNoEntry: false });
-  if (!stat) return undefined;
-  if (!stat.isFile()) throw usageError(`Refusing non-file: ${path}`);
-  if (stat.size > MAX_BYTES) throw usageError(`File exceeds ${MAX_BYTES} bytes: ${path}`);
-  const fd = openSync(full, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  let fd: number;
   try {
-    if (!fstatSync(fd).isFile()) throw usageError(`Refusing non-file: ${path}`);
+    fd = openSync(full, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+  } catch (error) {
+    if (isErrno(error, "ENOENT")) return undefined;
+    if (isErrno(error, "ELOOP")) throw usageError(`Refusing symbolic link: ${path}`);
+    throw error;
+  }
+  try {
+    const stat = fstatSync(fd);
+    if (!stat.isFile()) throw usageError(`Refusing non-file: ${path}`);
+    if (stat.size > MAX_BYTES) throw usageError(`File exceeds ${MAX_BYTES} bytes: ${path}`);
     const buffer = Buffer.alloc(MAX_BYTES + 1);
     let length = 0;
     while (length < buffer.length) {
@@ -45,6 +50,10 @@ export function readProjectFile(root: string, path: string): string | undefined 
   } finally {
     closeSync(fd);
   }
+}
+
+function isErrno(error: unknown, code: string): error is NodeJS.ErrnoException {
+  return error instanceof Error && "code" in error && error.code === code;
 }
 
 export function snapshotProject(root: string): ProjectSnapshot {
