@@ -16,11 +16,27 @@ const ORDER = [
 const REGISTRY = "https://registry.npmjs.org";
 const DEFAULT_VERIFICATION_ATTEMPTS = 37;
 const DEFAULT_VERIFICATION_DELAY_MS = 5_000;
+const MAX_FAILURE_DIAGNOSTIC_CHARS = 4_096;
 function npm(args) {
   return spawnSync("npm", args, { encoding: "utf8", timeout: 120_000, maxBuffer: 8 * 1024 * 1024 });
 }
 function sleep(milliseconds) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+}
+function npmFailureDiagnostic(result) {
+  const raw = [result.error?.message, result.stderr, result.stdout]
+    .filter(value => typeof value === "string" && value.trim())
+    .join("\n");
+  if (!raw) return "";
+  const redacted = raw
+    .replace(/\bnpm_[0-9A-Za-z]{20,}\b/g, "[REDACTED]")
+    .replace(/((?:NPM|NODE_AUTH)_TOKEN\s*=\s*)\S+/gi, "$1[REDACTED]")
+    .replace(/(_authToken\s*=\s*)\S+/gi, "$1[REDACTED]")
+    .replace(/(Authorization\s*:\s*(?:Bearer|Basic)\s+)\S+/gi, "$1[REDACTED]");
+  const bounded = redacted.length > MAX_FAILURE_DIAGNOSTIC_CHARS
+    ? `…${redacted.slice(-MAX_FAILURE_DIAGNOSTIC_CHARS)}`
+    : redacted;
+  return `; npm output:\n${bounded.trim()}`;
 }
 
 export function publishWorkspaces({
@@ -78,7 +94,7 @@ export function publishWorkspaces({
       : alreadyPublished(name, version);
     if (!verified) {
       if (result.status !== 0) {
-        throw new Error(`npm publish failed for ${name}@${version} (exit ${result.status ?? "null"}); registry verification failed`);
+        throw new Error(`npm publish failed for ${name}@${version} (exit ${result.status ?? "null"}); registry verification failed${npmFailureDiagnostic(result)}`);
       }
       const waitSeconds = Math.ceil((verificationAttempts - 1) * verificationDelayMs / 1_000);
       throw new Error(`npm publish returned exit 0 for ${name}@${version}, but the registry did not expose that version after ${verificationAttempts} checks over ${waitSeconds}s`);

@@ -18,7 +18,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run build
-      - run: npm audit --audit-level=high
+      - run: npm audit --audit-level=low
       - run: npm run typecheck
       - run: npm test
 
@@ -37,8 +37,34 @@ jobs:
       - name: Verify packed bootstrap and independent generated project
         run: node packages/cli/verification/distribution.mjs
 
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+      - name: Analyze with CodeQL
+        id: analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
+          output: codeql-results
+      - name: Block release when CodeQL reports alerts
+        run: node scripts/check-codeql-sarif.mjs "${{ steps.analyze.outputs.sarif-output }}"
+
   publish:
-    needs: [workspace, generated-project]
+    needs: [workspace, generated-project, codeql]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: prod
     runs-on: ubuntu-latest
