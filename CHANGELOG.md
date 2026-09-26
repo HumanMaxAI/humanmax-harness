@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-26
+
+### Fixed
+
+- Remove CodeQL findings for superlinear ANSI stripping and descriptor-unsafe project reads, and print bounded rule/path/line diagnostics when SAST still blocks publication.
+
 ## [Unreleased] - 2026-09-23
 
 ### Fixed

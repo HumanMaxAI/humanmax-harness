@@ -397,18 +397,77 @@ function digestFile(root: string, path: string): string {
   return `sha256:${createHash("sha256").update(text).digest("hex")}`;
 }
 
-const OSC_SEQUENCE = /\u001B\][\s\S]*?(?:\u0007|\u001B\\)/g;
-const CSI_SEQUENCE = /\u001B\[[0-?]*[ -\/]*[@-~]/g;
-const OTHER_ESCAPE = /\u001B[@-Z\\-_]/g;
-const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u009B]/g;
-
 /** Child output reaches the JSON envelope, which must stay free of ANSI text. */
 export function stripAnsi(text: string): string {
-  return text
-    .replace(OSC_SEQUENCE, "")
-    .replace(CSI_SEQUENCE, "")
-    .replace(OTHER_ESCAPE, "")
-    .replace(CONTROL_CHARACTERS, "");
+  const clean: string[] = [];
+  let index = 0;
+  while (index < text.length) {
+    const code = text.charCodeAt(index);
+    if (code === 0x1b) {
+      const kind = text[index + 1];
+      if (kind === "]") {
+        const end = oscEnd(text, index + 2);
+        if (end !== undefined) {
+          index = end;
+          continue;
+        }
+        appendVisible(text, index + 2, clean);
+        break;
+      }
+      if (kind === "[") {
+        const end = csiEnd(text, index + 2);
+        if (end !== undefined) {
+          index = end;
+          continue;
+        }
+        index += 2;
+        continue;
+      }
+      index += kind === undefined ? 1 : 2;
+      continue;
+    }
+    if (!isStrippedControl(code)) clean.push(text[index]!);
+    index += 1;
+  }
+  return clean.join("");
+}
+
+function oscEnd(text: string, start: number): number | undefined {
+  for (let index = start; index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    if (code === 0x07) return index + 1;
+    if (code === 0x1b && text[index + 1] === "\\") return index + 2;
+  }
+  return undefined;
+}
+
+function csiEnd(text: string, start: number): number | undefined {
+  let index = start;
+  while (index < text.length && inRange(text.charCodeAt(index), 0x30, 0x3f)) index += 1;
+  while (index < text.length && inRange(text.charCodeAt(index), 0x20, 0x2f)) index += 1;
+  return index < text.length && inRange(text.charCodeAt(index), 0x40, 0x7e) ? index + 1 : undefined;
+}
+
+function appendVisible(text: string, start: number, output: string[]): void {
+  let index = start;
+  while (index < text.length) {
+    const code = text.charCodeAt(index);
+    if (code === 0x1b) {
+      index += text[index + 1] === undefined ? 1 : 2;
+      continue;
+    }
+    if (!isStrippedControl(code)) output.push(text[index]!);
+    index += 1;
+  }
+}
+
+function isStrippedControl(code: number): boolean {
+  return (code >= 0x00 && code <= 0x08) || code === 0x0b || code === 0x0c ||
+    (code >= 0x0e && code <= 0x1f) || code === 0x7f || code === 0x9b;
+}
+
+function inRange(value: number, low: number, high: number): boolean {
+  return value >= low && value <= high;
 }
 
 function tail(output: string | null | undefined): string[] {

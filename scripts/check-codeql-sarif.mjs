@@ -4,6 +4,25 @@ import { fileURLToPath } from "node:url";
 
 const MAX_REPORTS = 64;
 const MAX_TOTAL_BYTES = 20 * 1024 * 1024;
+const MAX_FINDING_SUMMARIES = 20;
+const MAX_FIELD_LENGTH = 256;
+
+function boundedField(value, fallback) {
+  if (typeof value !== "string" || value.length === 0) return fallback;
+  return value.slice(0, MAX_FIELD_LENGTH).replace(/[\u0000-\u001f\u007f]/g, "?");
+}
+
+function findingSummary(result) {
+  const location = result?.locations?.[0]?.physicalLocation;
+  const line = Number.isSafeInteger(location?.region?.startLine) && location.region.startLine > 0
+    ? location.region.startLine
+    : undefined;
+  return JSON.stringify({
+    ruleId: boundedField(result?.ruleId, "unknown-rule"),
+    path: boundedField(location?.artifactLocation?.uri, "unknown-path"),
+    ...(line === undefined ? {} : { line }),
+  });
+}
 
 function sarifReports(root) {
   const pending = [resolve(root)];
@@ -32,6 +51,7 @@ function sarifReports(root) {
 export function checkCodeqlSarif(root) {
   const files = sarifReports(root);
   let alerts = 0;
+  const summaries = [];
   for (const file of files) {
     let report;
     try {
@@ -46,10 +66,18 @@ export function checkCodeqlSarif(root) {
       if (run?.results !== undefined && !Array.isArray(run.results)) {
         throw new Error(`invalid SARIF results: ${file}`);
       }
-      alerts += run?.results?.length ?? 0;
+      for (const result of run?.results ?? []) {
+        alerts += 1;
+        if (summaries.length < MAX_FINDING_SUMMARIES) summaries.push(findingSummary(result));
+      }
     }
   }
-  if (alerts) throw new Error(`CodeQL reported ${alerts} alert(s); publication blocked`);
+  if (alerts) {
+    const omitted = alerts - summaries.length;
+    const details = summaries.map((summary) => `CodeQL finding: ${summary}`);
+    if (omitted > 0) details.push(`CodeQL findings omitted: ${omitted}`);
+    throw new Error(`CodeQL reported ${alerts} alert(s); publication blocked\n${details.join("\n")}`);
+  }
   return { files: files.length, alerts };
 }
 
