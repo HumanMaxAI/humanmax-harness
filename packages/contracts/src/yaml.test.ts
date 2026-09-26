@@ -260,6 +260,22 @@ none: []
   });
 });
 
+test("quoted mapping keys decode each supported escape exactly once", () => {
+  assert.deepEqual(
+    readCanonicalYaml(String.raw`"path\\segment": one
+"quote\"key": two
+"slash\\\"quote": three
+'single''quote': four
+`),
+    {
+      "path\\segment": "one",
+      'quote"key': "two",
+      'slash\\"quote': "three",
+      "single'quote": "four",
+    },
+  );
+});
+
 test("a sequence may sit at the indentation of the key that owns it", () => {
   assert.deepEqual(
     readCanonicalYaml(`profiles:
