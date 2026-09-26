@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 ### Fixed
 
+- Normalize the `create-humanmax-agent` executable path so npm publishes the committed manifest without auto-correction warnings.
 - Decode quoted YAML mapping-key escapes in one pass, eliminating the remaining CodeQL double-escaping finding without changing the accepted subset.
 - Remove CodeQL findings for superlinear ANSI stripping and descriptor-unsafe project reads, and print bounded rule/path/line diagnostics when SAST still blocks publication.
 
