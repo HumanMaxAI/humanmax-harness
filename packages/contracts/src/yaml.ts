@@ -620,8 +620,28 @@ function findClosingQuote(text: string, quote: '"' | "'"): number | undefined {
 }
 
 function decodeQuotedKey(text: string, quote: '"' | "'"): string {
-  const inner = text.slice(1, -1);
-  return quote === "'"
-    ? inner.replaceAll("''", "'")
-    : inner.replaceAll("\\\\", "\\").replaceAll('\\"', '"');
+  let decoded = "";
+  let index = 1;
+  const end = text.length - 1;
+
+  while (index < end) {
+    const char = text[index] ?? "";
+    const next = text[index + 1];
+
+    if (quote === "'" && char === "'" && next === "'") {
+      decoded += "'";
+      index += 2;
+      continue;
+    }
+    if (quote === '"' && char === "\\" && (next === "\\" || next === '"')) {
+      decoded += next;
+      index += 2;
+      continue;
+    }
+
+    decoded += char;
+    index += 1;
+  }
+
+  return decoded;
 }
