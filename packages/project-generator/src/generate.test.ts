@@ -19,7 +19,7 @@ test("preview default path does not include sg-core", () => {
 });
 
 test("default output installs published runtime dependencies without a checkout", () => {
-  const files = generateProject({ destination: "/tmp/npm-consumer", name: "npm-consumer", dryRun: true }).files;
+  const files = generateProject({ destination: resolve("npm-consumer"), name: "npm-consumer", dryRun: true }).files;
   const manifest = JSON.parse(files.find(f => f.path === "package.json")!.contents);
   assert.deepEqual(manifest.dependencies, {
     "@humanmax/contracts": "0.1.0",
