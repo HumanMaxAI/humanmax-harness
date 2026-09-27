@@ -70,25 +70,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
           registry-url: https://registry.npmjs.org
-          scope: "@humanmax"
+      - name: Install npm with Trusted Publishing support
+        run: npm install --global --ignore-scripts npm@11.19.0
       - run: npm ci --ignore-scripts
       - run: npm run build
-      - name: Check publishing credentials are configured
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "::error::NPM_TOKEN is missing. Configure it in Settings > Environments > prod > Environment secrets."
-            exit 1
-          fi
       - name: Publish packages that are not already on the registry
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: node scripts/publish-workspaces.mjs
