@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-27
+
+### Added
+
+- Publish the initial `create-humanmax-agent@0.1.0` and `humanmax@0.1.0` entry packages and bind all eight public packages to the repository's GitHub Actions Trusted Publisher identity.
+
+### Changed
+
+- Replace the long-lived npm publication token with GitHub OIDC Trusted Publishing, scoped to the `ci.yml` workflow and `prod` environment, using pinned npm 11.19.0.
+
+### Fixed
+
+- Normalize the `humanmax` wrapper executable path to match npm's published manifest without changing the installed command.
+
 ## [Unreleased] - 2026-09-26
 
 ### Fixed
