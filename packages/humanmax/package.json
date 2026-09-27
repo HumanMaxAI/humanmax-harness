@@ -20,7 +20,7 @@
     "url": "https://github.com/HumanMaxAI/humanmax-harness/issues"
   },
   "bin": {
-    "humanmax": "./cli.js"
+    "humanmax": "cli.js"
   },
   "files": [
     "cli.js"
