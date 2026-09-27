@@ -16,6 +16,24 @@ test("publication requires every quality job", () => {
   assert.match(publishJob, /^    needs: \[workspace, generated-project, codeql\]$/m);
 });
 
+test("npm publication uses GitHub OIDC without a reusable write token", () => {
+  const prerequisiteJobs = workflow.match(/\njobs:\n([\s\S]*?)\n  publish:/)?.[1];
+  const publishJob = workflow.match(/\n  publish:\n([\s\S]*)$/)?.[1];
+  assert.ok(prerequisiteJobs, "quality jobs must exist before publish");
+  assert.ok(publishJob, "publish job must exist");
+  assert.doesNotMatch(prerequisiteJobs, /id-token: write/);
+  assert.match(publishJob, /^    environment: prod$/m);
+  assert.match(publishJob, /^      contents: read$/m);
+  assert.match(publishJob, /^      id-token: write$/m);
+  assert.match(
+    publishJob,
+    /npm install --global --ignore-scripts npm@11\.19\.0/,
+  );
+  assert.match(publishJob, /node scripts\/publish-workspaces\.mjs/);
+  assert.doesNotMatch(publishJob, /cache: npm/);
+  assert.doesNotMatch(publishJob, /NPM_TOKEN|NODE_AUTH_TOKEN|secrets\./);
+});
+
 test("CodeQL runs security-extended analysis without release secrets", () => {
   const codeqlJob = workflow.match(/\n  codeql:\n([\s\S]*?)\n  publish:/)?.[1];
   assert.ok(codeqlJob, "CodeQL job must exist before publish");
