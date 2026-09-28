@@ -1,4 +1,10 @@
 export { productionEnforcementState } from "./enforcement-state.ts";
+export { composePrompt } from "./prompt.ts";
+export type { ComposedPrompt, PromptMessage } from "./prompt.ts";
+export { assertSupportedOutputSchema, validateStructuredOutput } from "./output-schema.ts";
+export type { OutputValidation } from "./output-schema.ts";
+export { DeterministicFixtureModel, validateModelStep } from "./model.ts";
+export type { ModelAdapter, ModelRequest, ModelStep } from "./model.ts";
 export {
   DenyAllProductionAdapter,
   LocalReviewAdapter,
