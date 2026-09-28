@@ -10,6 +10,9 @@ const schemas = join(dirname(fileURLToPath(import.meta.url)), "../schemas");
 test("language-neutral JSON Schema files are published", () => {
   for (const name of [
     "harness-project.schema.json",
+    "harness-project-v1alpha2.schema.json",
+    "agent-v1alpha2.schema.json",
+    "prompt.schema.json",
     "tool.schema.json",
     "finding.schema.json",
     "risk-exception.schema.json",

@@ -1,4 +1,5 @@
 export {
+  AGENTIC_API_VERSION,
   AUTONOMY_TIERS,
   CLI_RESPONSE_API_VERSION,
   CONFIDENCES,
@@ -48,6 +49,7 @@ export type {
 
 export type {
   Agent,
+  AgentV2,
   CliResponse,
   DocumentFor,
   EnforcementDecision,
@@ -57,9 +59,11 @@ export type {
   HarnessDocument,
   HarnessEvidenceManifest,
   HarnessProject,
+  HarnessProjectV2,
   HarnessRuleMetadata,
   KindMap,
   PackLock,
+  Prompt,
   ProposedAction,
   RiskException,
   SubjectRef,

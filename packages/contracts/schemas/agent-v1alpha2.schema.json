@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://humanmax.ai/harness/v1alpha2/agent.schema.json",
+  "title": "Agent v1alpha2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "humanmax.ai/harness/v1alpha2"
+    },
+    "kind": {
+      "const": "Agent"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "owners"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owners": {
+          "type": "object",
+          "required": [
+            "business",
+            "technical",
+            "risk"
+          ],
+          "properties": {
+            "business": {
+              "type": "string",
+              "minLength": 1
+            },
+            "technical": {
+              "type": "string",
+              "minLength": 1
+            },
+            "risk": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "purpose",
+        "autonomyTier",
+        "prohibitedActions",
+        "tools",
+        "manualFallback",
+        "reviewExpiresAt",
+        "promptRef"
+      ],
+      "properties": {
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "autonomyTier": {
+          "enum": [
+            "read-only",
+            "assisted",
+            "bounded"
+          ]
+        },
+        "prohibitedActions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "manualFallback": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewExpiresAt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "promptRef": {
+          "type": "string",
+          "pattern": "^\\.humanmax/prompts/[A-Za-z0-9/_-]+\\.yaml$",
+          "maxLength": 256
+        }
+      }
+    }
+  }
+}

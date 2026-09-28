@@ -59,6 +59,13 @@ export type HarnessProject = {
   };
 };
 
+export type HarnessProjectV2 = Omit<HarnessProject, "apiVersion" | "spec"> & {
+  apiVersion: "humanmax.ai/harness/v1alpha2";
+  spec: HarnessProject["spec"] & {
+    agentic: { contractVersion: "1"; capabilities: ["prompt"] };
+  };
+};
+
 export type Agent = {
   apiVersion: "humanmax.ai/harness/v1alpha1";
   kind: "Agent";
@@ -78,6 +85,26 @@ export type Agent = {
     tools: string[];
     manualFallback: string;
     reviewExpiresAt: string;
+  };
+};
+
+export type AgentV2 = Omit<Agent, "apiVersion" | "spec"> & {
+  apiVersion: "humanmax.ai/harness/v1alpha2";
+  spec: Agent["spec"] & { promptRef: string };
+};
+
+export type Prompt = {
+  apiVersion: "humanmax.ai/harness/v1alpha2";
+  kind: "Prompt";
+  metadata: { id: string; version: string };
+  spec: {
+    role: string;
+    instructions: string[];
+    toolGuidance: string[];
+    recovery: string[];
+    variables: Array<{ name: string; required: true; source: "task" }>;
+    examples: Array<{ id: string; input: string; output: Record<string, unknown> }>;
+    output: { schemaRef: string };
   };
 };
 
@@ -248,7 +275,10 @@ export type EnforcementDecision =
 
 export type HarnessDocument =
   | HarnessProject
+  | HarnessProjectV2
   | Agent
+  | AgentV2
+  | Prompt
   | Tool
   | Finding
   | RiskException
@@ -266,8 +296,9 @@ export type ValidateOptions = {
 };
 
 export type KindMap = {
-  HarnessProject: HarnessProject;
-  Agent: Agent;
+  HarnessProject: HarnessProject | HarnessProjectV2;
+  Agent: Agent | AgentV2;
+  Prompt: Prompt;
   Tool: Tool;
   Finding: Finding;
   RiskException: RiskException;

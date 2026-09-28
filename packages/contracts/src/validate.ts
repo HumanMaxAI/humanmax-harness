@@ -1,4 +1,5 @@
 import {
+  AGENTIC_API_VERSION,
   AUTONOMY_TIERS,
   CONFIDENCES,
   DOCUMENT_KINDS,
@@ -73,6 +74,23 @@ function nested(
   return value;
 }
 
+function exactKeys(value: Record<string, unknown>, allowed: readonly string[], path: string, errors: string[]): void {
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) errors.push(`${path}.${key} is unsupported`);
+  }
+}
+
+function safeProjectRef(value: unknown, prefix: string, suffix: string): value is string {
+  return typeof value === "string" && value.startsWith(prefix) && value.endsWith(suffix) &&
+    value.length <= 256 && !value.includes("\\") && !value.includes("//") &&
+    !value.split("/").includes("..") && !value.split("/").includes(".") &&
+    !/[\u0000-\u001f\u007f]/.test(value);
+}
+
+function unique(values: string[]): boolean {
+  return new Set(values).size === values.length;
+}
+
 export function validate<K extends DocumentKind>(
   kind: K,
   document: unknown,
@@ -92,6 +110,9 @@ export function validate<K extends DocumentKind>(
       break;
     case "Agent":
       validateAgent(document, errors);
+      break;
+    case "Prompt":
+      validatePrompt(document, errors);
       break;
     case "Tool":
       validateTool(document, errors);
@@ -125,7 +146,8 @@ export function validate<K extends DocumentKind>(
 }
 
 function validateProject(document: Record<string, unknown>, errors: string[]): void {
-  requireKind(document, "HarnessProject", "humanmax.ai/harness/v1alpha1", errors);
+  const agentic = document.apiVersion === AGENTIC_API_VERSION;
+  requireKind(document, "HarnessProject", agentic ? AGENTIC_API_VERSION : "humanmax.ai/harness/v1alpha1", errors);
   const metadata = nested(document.metadata, "metadata", errors);
   if (metadata && !isString(metadata.projectId)) {
     errors.push("metadata.projectId is required");
@@ -133,6 +155,19 @@ function validateProject(document: Record<string, unknown>, errors: string[]): v
   const spec = nested(document.spec, "spec", errors);
   if (!spec) {
     return;
+  }
+  if (agentic) {
+    exactKeys(spec, ["generator", "profiles", "autonomy", "runtime", "include", "exclude", "ci", "agentic"], "spec", errors);
+    const extension = nested(spec.agentic, "spec.agentic", errors);
+    if (extension) {
+      exactKeys(extension, ["contractVersion", "capabilities"], "spec.agentic", errors);
+      if (extension.contractVersion !== "1" || !Array.isArray(extension.capabilities) ||
+          extension.capabilities.length !== 1 || extension.capabilities[0] !== "prompt") {
+        errors.push("spec.agentic must opt into contractVersion 1 and prompt only");
+      }
+    }
+  } else if (spec.agentic !== undefined) {
+    errors.push("spec.agentic requires v1alpha2");
   }
   const generator = nested(spec.generator, "spec.generator", errors);
   if (generator) {
@@ -182,7 +217,8 @@ function validateProject(document: Record<string, unknown>, errors: string[]): v
 }
 
 function validateAgent(document: Record<string, unknown>, errors: string[]): void {
-  requireKind(document, "Agent", "humanmax.ai/harness/v1alpha1", errors);
+  const agentic = document.apiVersion === AGENTIC_API_VERSION;
+  requireKind(document, "Agent", agentic ? AGENTIC_API_VERSION : "humanmax.ai/harness/v1alpha1", errors);
   const metadata = nested(document.metadata, "metadata", errors);
   if (metadata) {
     if (!isString(metadata.id) || !isString(metadata.version)) {
@@ -201,6 +237,14 @@ function validateAgent(document: Record<string, unknown>, errors: string[]): voi
   if (!spec) {
     return;
   }
+  if (agentic) {
+    exactKeys(spec, ["purpose", "autonomyTier", "prohibitedActions", "tools", "manualFallback", "reviewExpiresAt", "promptRef"], "spec", errors);
+    if (!safeProjectRef(spec.promptRef, ".humanmax/prompts/", ".yaml")) {
+      errors.push("spec.promptRef must be a local prompt YAML path");
+    }
+  } else if (spec.promptRef !== undefined) {
+    errors.push("spec.promptRef requires v1alpha2");
+  }
   if (!isString(spec.purpose)) {
     errors.push("spec.purpose is required");
   }
@@ -212,6 +256,64 @@ function validateAgent(document: Record<string, unknown>, errors: string[]): voi
   }
   if (!isString(spec.manualFallback) || !isString(spec.reviewExpiresAt)) {
     errors.push("spec.manualFallback and spec.reviewExpiresAt are required");
+  }
+}
+
+function validatePrompt(document: Record<string, unknown>, errors: string[]): void {
+  requireKind(document, "Prompt", AGENTIC_API_VERSION, errors);
+  exactKeys(document, ["apiVersion", "kind", "metadata", "spec"], "Prompt", errors);
+  const metadata = nested(document.metadata, "metadata", errors);
+  if (metadata) {
+    exactKeys(metadata, ["id", "version"], "metadata", errors);
+    if (!isString(metadata.id) || !/^[a-z][a-z0-9-]*$/.test(metadata.id) ||
+        !isString(metadata.version) || !/^\d+\.\d+\.\d+$/.test(metadata.version)) {
+      errors.push("metadata.id and semantic version are required");
+    }
+  }
+  const spec = nested(document.spec, "spec", errors);
+  if (!spec) return;
+  exactKeys(spec, ["role", "instructions", "toolGuidance", "recovery", "variables", "examples", "output"], "spec", errors);
+  if (!isString(spec.role)) errors.push("spec.role is required");
+  for (const key of ["instructions", "toolGuidance", "recovery"] as const) {
+    if (!isStringArray(spec[key]) || (key === "instructions" && spec[key].length === 0)) {
+      errors.push(`spec.${key} must be a string array${key === "instructions" ? " with an instruction" : ""}`);
+    }
+  }
+  if (!Array.isArray(spec.variables) || spec.variables.length === 0) {
+    errors.push("spec.variables requires task objective");
+  } else {
+    const names: string[] = [];
+    for (const [i, variable] of spec.variables.entries()) {
+      const path = `spec.variables[${i}]`;
+      if (!isRecord(variable)) { errors.push(`${path} must be an object`); continue; }
+      exactKeys(variable, ["name", "required", "source"], path, errors);
+      if (!isString(variable.name) || !/^[a-z][a-zA-Z0-9]*$/.test(variable.name) ||
+          variable.required !== true || variable.source !== "task") {
+        errors.push(`${path} must declare a required task variable`);
+      } else names.push(variable.name);
+    }
+    if (!names.includes("objective") || !unique(names)) errors.push("spec.variables must contain one unique objective");
+  }
+  if (!Array.isArray(spec.examples)) {
+    errors.push("spec.examples must be an array");
+  } else {
+    const ids: string[] = [];
+    for (const [i, example] of spec.examples.entries()) {
+      const path = `spec.examples[${i}]`;
+      if (!isRecord(example)) { errors.push(`${path} must be an object`); continue; }
+      exactKeys(example, ["id", "input", "output"], path, errors);
+      if (!isString(example.id) || !isString(example.input) || !isRecord(example.output)) {
+        errors.push(`${path} requires id, input and object output`);
+      } else ids.push(example.id);
+    }
+    if (!unique(ids)) errors.push("spec.examples ids must be unique");
+  }
+  const output = nested(spec.output, "spec.output", errors);
+  if (output) {
+    exactKeys(output, ["schemaRef"], "spec.output", errors);
+    if (!safeProjectRef(output.schemaRef, ".humanmax/schemas/", ".json")) {
+      errors.push("spec.output.schemaRef must be a local schema JSON path");
+    }
   }
 }
 

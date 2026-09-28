@@ -1,4 +1,5 @@
 export const HARNESS_API_VERSION = "humanmax.ai/harness/v1alpha1" as const;
+export const AGENTIC_API_VERSION = "humanmax.ai/harness/v1alpha2" as const;
 export const FINDING_API_VERSION = "humanmax.ai/finding/v1alpha1" as const;
 export const PACK_LOCK_API_VERSION = "humanmax.ai/pack-lock/v1alpha1" as const;
 export const EVIDENCE_API_VERSION = "humanmax.ai/evidence/v1alpha1" as const;
@@ -114,6 +115,7 @@ export type PreviewLanguage = (typeof PREVIEW_LANGUAGES)[number];
 export const DOCUMENT_KINDS = [
   "HarnessProject",
   "Agent",
+  "Prompt",
   "Tool",
   "Finding",
   "RiskException",

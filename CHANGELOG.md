@@ -12,6 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 ### Added
 
+- Add opt-in v1alpha2 Prompt, HarnessProject and Agent contract types, validators and JSON Schemas; preserve v1alpha1 projects.
 - Document the nine engineering disciplines, source-backed coverage, proposed configuration/runtime contracts, generated layout, compatibility policy and per-stage acceptance gates.
 
 ### Fixed
