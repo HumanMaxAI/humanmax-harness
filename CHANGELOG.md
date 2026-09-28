@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-09-28
+
+### Planned
+
+- Establish a documentation-first Agentic Engineering architecture baseline and ordered Prompt → Context → Working state → Loop → trajectory P0 delivery plan; no runtime behavior changes.
+
 ## [Unreleased] - 2026-09-27
 
 ### Added
