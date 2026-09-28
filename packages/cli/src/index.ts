@@ -233,6 +233,12 @@ function doctor(root: string): CliResponse {
 
 function runCheck(root: string, command: string): CliResponse {
   const snapshot = snapshotProject(root);
+  if (snapshot.project && typeof snapshot.project === "object" &&
+      "apiVersion" in snapshot.project && snapshot.project.apiVersion === "humanmax.ai/harness/v1alpha2") {
+    validateDeclarations(root, snapshot);
+    // The locked base pack has no Prompt rule yet. Refuse a false green result.
+    throw usageError("Prompt contract evaluation is not yet supported by the locked base pack");
+  }
   const evaluation = evaluate({ ...snapshot, generatorLock: snapshot.generatorLock ?? {} });
   const failed =
     evaluation.summary.fail > 0 ||

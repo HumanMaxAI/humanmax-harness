@@ -1,6 +1,6 @@
 import { closeSync, constants, fstatSync, lstatSync, openSync, readSync, readdirSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
-import { readCanonicalYaml, validate, YamlParseError, type HarnessProject } from "@humanmax/contracts";
+import { readCanonicalYaml, validate, YamlParseError, type HarnessProject, type HarnessProjectV2 } from "@humanmax/contracts";
 import { readProjectSnapshot, type ProjectSnapshot } from "@humanmax/project-generator";
 import { usageError } from "./errors.ts";
 
@@ -76,7 +76,7 @@ export function snapshotProject(root: string): ProjectSnapshot {
   }
 }
 
-export function validateDeclarations(root: string, snapshot: ProjectSnapshot): HarnessProject {
+export function validateDeclarations(root: string, snapshot: ProjectSnapshot): HarnessProject | HarnessProjectV2 {
   const checked = validate("HarnessProject", snapshot.project);
   if (!checked.ok) throw usageError(checked.errors.join("; "));
   const project = checked.value;
@@ -104,6 +104,22 @@ export function validateDeclarations(root: string, snapshot: ProjectSnapshot): H
     if (!result.ok) throw usageError(`${path}: ${result.errors.join("; ")}`);
     if (agentIds.has(result.value.metadata.id)) throw usageError(`Duplicate agent: ${result.value.metadata.id}`);
     agentIds.add(result.value.metadata.id);
+    if (project.apiVersion !== result.value.apiVersion) throw usageError(`${path}: Agent and project versions differ`);
+    if (result.value.apiVersion === "humanmax.ai/harness/v1alpha2") {
+      const promptPath = result.value.spec.promptRef;
+      const promptText = readProjectFile(root, promptPath);
+      if (promptText === undefined) throw usageError(`${path}: referenced prompt is missing`);
+      const prompt = validate("Prompt", readCanonicalYaml(promptText, { source: promptPath }));
+      if (!prompt.ok) throw usageError(`${promptPath}: ${prompt.errors.join("; ")}`);
+      const schemaPath = prompt.value.spec.output.schemaRef;
+      const schemaText = readProjectFile(root, schemaPath);
+      if (schemaText === undefined) throw usageError(`${promptPath}: referenced output schema is missing`);
+      let schema: unknown;
+      try { schema = JSON.parse(schemaText); } catch { throw usageError(`${schemaPath}: output schema JSON is invalid`); }
+      if (!isRecord(schema) || schema.$schema !== "https://json-schema.org/draft/2020-12/schema") {
+        throw usageError(`${schemaPath}: output schema dialect is unsupported`);
+      }
+    }
     for (const id of result.value.spec.tools) {
       if (!toolIds.has(id)) throw usageError(`${path} references undeclared tool: ${id}`);
     }
