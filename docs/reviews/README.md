@@ -4,6 +4,7 @@ Verdicts, findings, scope cuts, and launch risk live here. They comment on desig
 
 | File | Status |
 |---|---|
+| [2026-09-28-agentic-engineering-baseline.md](./2026-09-28-agentic-engineering-baseline.md) | Source inventory and documentation verification; P0 implementation not assessed |
 | [2026-08-30-product-review.md](./2026-08-30-product-review.md) | Product review of design v0.3 |
 | [2026-09-02-preview-gap-review.md](./2026-09-02-preview-gap-review.md) | Preview loop is broken on `main@07448fa`; §20 gate tally |
 

@@ -2,7 +2,7 @@
 
 Open-source, local-first project generator and runtime scaffold for assurance-ready AI agents.
 
-This repository is in **Preview scaffold**. Packages exist and compile, but they do not yet generate a customer project. The product promise is:
+This repository is in **Preview**. The TypeScript `tool-agent` generator emits a runnable local fixture, canonical declarations, tests/evals and a manual GitHub workflow. Prompt/context/state/loop/trajectory capabilities are planned in the [Agentic Engineering architecture baseline](docs/design/2026-09-28-agentic-engineering-architecture.md); they are not yet implemented. The product promise is:
 
 > Create a local-first, assurance-ready agent project with explicit action boundaries, jurisdiction-aware controls and evidence-producing CI.
 

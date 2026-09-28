@@ -4,6 +4,8 @@ Task-level execution plans and proto-specs (`*-intent.md`) live here. They do no
 
 | File | Status |
 |---|---|
+| [2026-09-28-agentic-engineering-intent.md](./2026-09-28-agentic-engineering-intent.md) | Accepted documentation-first scope |
+| [2026-09-28-agentic-engineering.md](./2026-09-28-agentic-engineering.md) | Documentation baseline and ordered P0 implementation tasks |
 | [2026-09-02-preview-green-loop.md](./2026-09-02-preview-green-loop.md) | Make the Preview create → run → check loop actually green |
 | [2026-09-02-ai-native-sdlc-intent.md](./2026-09-02-ai-native-sdlc-intent.md) | Internal SDLC adapter (accepted). Operating note: [`../agents/2026-09-02-ai-native-sdlc.md`](../agents/2026-09-02-ai-native-sdlc.md) |
 

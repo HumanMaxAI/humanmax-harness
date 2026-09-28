@@ -10,6 +10,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 - Establish a documentation-first Agentic Engineering architecture baseline and ordered Prompt → Context → Working state → Loop → trajectory P0 delivery plan; no runtime behavior changes.
 
+### Added
+
+- Document the nine engineering disciplines, source-backed coverage, proposed configuration/runtime contracts, generated layout, compatibility policy and per-stage acceptance gates.
+
+### Fixed
+
+- Correct the stale root README claim that the implemented Preview generator cannot create customer projects.
+
 ## [Unreleased] - 2026-09-27
 
 ### Added

@@ -1,8 +1,8 @@
 # Plan: Agentic Engineering architecture baseline and P0 delivery
 
-Date: 2026-09-28. Status: documentation in progress; P0 implementation not started.  
-Intent: [accepted scope](./2026-09-28-agentic-engineering-intent.md).  
-Design: `docs/design/2026-09-28-agentic-engineering-architecture.md` (created by this plan).
+Date: 2026-09-28. Status: documentation baseline complete; P0 implementation not started.
+Intent: [accepted scope](./2026-09-28-agentic-engineering-intent.md).
+Design: [Agentic Engineering architecture](../design/2026-09-28-agentic-engineering-architecture.md).
 
 ## Documentation change
 
