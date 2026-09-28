@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 - Add opt-in v1alpha2 Prompt, HarnessProject and Agent contract types, validators and JSON Schemas; preserve v1alpha1 projects.
 - Add deterministic prompt composition, a local structured-output validator and an offline fixture model adapter behind the runtime package.
 - Validate v1alpha2 Prompt references in the CLI and refuse a green `check` until the locked base pack can evaluate the contract.
+- Add a local-file-only opt-in generator fixture for the unreleased Prompt contract, with canonical YAML/schema and user-owned offline runner/tests.
 - Document the nine engineering disciplines, source-backed coverage, proposed configuration/runtime contracts, generated layout, compatibility policy and per-stage acceptance gates.
 
 ### Fixed

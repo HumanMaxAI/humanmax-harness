@@ -89,3 +89,16 @@ test("a generated project installs, links the CLI bin, and passes its own tests"
   assert.equal(report.results[0].productionEnforcement, "unconfigured");
   assert.equal(report.results[0].enforcementAdapter, "local-review");
 });
+
+test("opt-in prompt project installs and validates an offline candidate without claiming completion", { timeout: 600_000 }, (t) => {
+  const dest = join(mkdtempSync(join(tmpdir(), "humanmax-prompt-install-")), "demo-agent");
+  t.after(() => rmSync(dest, { recursive: true, force: true }));
+  generateProject({ destination: dest, name: "demo-agent", dependencyMode: "local-file", options: { agenticPrompt: true } });
+  for (const args of [["install"], ["run", "build"], ["run", "typecheck"], ["test"], ["run", "humanmax", "--", "doctor", "--format", "json"]]) {
+    const result = run(args, dest);
+    assert.equal(result.status, 0, detail(args.join(" "), result));
+  }
+  const check = run(["run", "humanmax", "--", "check", "--format", "json"], dest);
+  assert.notEqual(check.status, 0);
+  assert.match(check.stdout, /Prompt contract evaluation is not yet supported/);
+});

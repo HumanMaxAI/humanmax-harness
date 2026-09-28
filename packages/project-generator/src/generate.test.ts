@@ -128,3 +128,22 @@ test("every emitted file: dependency resolves to a real harness package", async 
     assert.equal(linked.name, name);
   }
 });
+
+test("opt-in prompt fixture emits a versioned canonical prompt and offline runner", () => {
+  const plan = generateProject({ destination: resolve("prompt-fixture"), name: "prompt-fixture", dryRun: true,
+    dependencyMode: "local-file", options: { agenticPrompt: true } });
+  const paths = new Map(plan.files.map(file => [file.path, file]));
+  assert.match(paths.get(".humanmax/project.yaml")?.contents ?? "", /v1alpha2/);
+  assert.match(paths.get(".humanmax/agents/default.agent.yaml")?.contents ?? "", /promptRef:/);
+  assert.equal(paths.get(".humanmax/prompts/default.prompt.yaml")?.ownership, "canonical");
+  assert.equal(paths.get(".humanmax/schemas/answer.schema.json")?.ownership, "canonical");
+  assert.equal(paths.get("src/agent/prompt-fixture.ts")?.ownership, "user-owned");
+  assert.equal(paths.get("tests/prompt.test.ts")?.ownership, "user-owned");
+  const lock = JSON.parse(paths.get(".humanmax/generator.lock")?.contents ?? "{}");
+  assert.equal(lock.files[".humanmax/prompts/default.prompt.yaml"].class, "canonical");
+});
+
+test("unreleased prompt fixture cannot claim compatibility with published 0.1.x packages", () => {
+  assert.throws(() => generateProject({ destination: resolve("npm-prompt"), name: "npm-prompt", dryRun: true,
+    options: { agenticPrompt: true } }), /local-file|unreleased|published/);
+});
