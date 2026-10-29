@@ -62,6 +62,21 @@ Rules:
 Current canonical design: `docs/design/2026-08-29-open-source-product-design.md`  
 Current product review: `docs/reviews/2026-08-30-product-review.md`
 
+## Documentation writing style
+
+Use a writing style inspired by ASD-STE100 Simplified Technical English, at approximately 80% strictness. This is an editorial target. It is not a claim of ASD-STE100 conformity.
+
+- Use short, direct sentences. Express one main idea per sentence.
+- Prefer active voice. Name the actor when the actor matters.
+- Use consistent technical terminology. Avoid vague or ambiguous language.
+- State actions, conditions, and expected results explicitly.
+- Preserve all important technical details, risks, exceptions, and numbers.
+- Use numbered steps for procedures.
+- Clearly distinguish facts, assumptions, and recommendations.
+- Optimize for technical accuracy, clarity, and ease of verification.
+
+Follow the examples and review procedure in [the documentation style guide](docs/agents/2026-10-29-documentation-style.md). Preserve exact commands, identifiers, and result states. Do not simplify a requirement into a recommendation.
+
 ## Development loop
 
 Non-trivial work in this repository follows the artifact chain in [`docs/agents/2026-09-02-ai-native-sdlc.md`](docs/agents/2026-09-02-ai-native-sdlc.md). Pull request review uses [`docs/agents/pr-review.md`](docs/agents/pr-review.md).
