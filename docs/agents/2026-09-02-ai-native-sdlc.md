@@ -4,13 +4,13 @@
 **Intent:** [`../plans/2026-09-02-ai-native-sdlc-intent.md`](../plans/2026-09-02-ai-native-sdlc-intent.md)  
 **PR review:** [`pr-review.md`](./pr-review.md)
 
-This file is an operating note. It does not amend the product design. It does not expand Preview.
+This file explains the development process. It does not amend the product design or expand Preview.
 
-Binding constraints stay in `/AGENTS.md`. This note only says how a change moves through artifacts in *this* repo.
+The binding constraints are in `/AGENTS.md`. This note explains how a change moves through artifacts in this repository.
 
 ## What this is
 
-A mapping of the [AI-native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook) onto names we already use. Each non-trivial change commits an artifact the next step can read. Humans stay accountable at the gates.
+This note maps the [AI-native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook) to existing repository terms. For each non-trivial change, commit an artifact that the next stage can read. Humans remain accountable at each gate.
 
 ## What this is not
 
@@ -21,7 +21,7 @@ A mapping of the [AI-native SDLC playbook](https://claude.com/blog/the-ai-native
 
 ## Artifact chain
 
-Keep these names. Do not copy the playbook’s root filenames.
+Use these artifact names. Do not copy the playbook's root filenames.
 
 | Stage | Artifact | Location |
 |---|---|---|
@@ -33,13 +33,13 @@ Keep these names. Do not copy the playbook’s root filenames.
 | Test | Command output | pasted in the session / PR before “done” |
 | Deploy | PR + changelog | GitHub; human merge |
 
-`AGENTS.md` is this repository’s committed operating file. `CLAUDE.md` is an adapter. Do not replace `AGENTS.md` with a root `CLAUDE.md` as source of truth.
+`AGENTS.md` is this repository's committed operating file. `CLAUDE.md` is an adapter. Do not make a root `CLAUDE.md` the source of truth in place of `AGENTS.md`.
 
 Source of truth order is unchanged: contracts → packs → gateway → Core → CLI JSON → generated artefacts → this file’s adapters.
 
 ## When an intent file is required
 
-Write `docs/plans/YYYY-MM-DD-<topic>-intent.md` before a new design, a new review that starts work, or a new plan, when the originator’s words are not already in one of those files.
+Check whether a design, review, or plan already records the originator's request. If none does, write `docs/plans/YYYY-MM-DD-<topic>-intent.md` before starting the new artifact. This requirement applies to a new design, a new review that starts work, or a new plan.
 
 Skip the intent file when:
 
@@ -72,20 +72,20 @@ What we are not doing, including good ideas.
 Anything a product owner or tech lead must answer before design or plan.
 ```
 
-The originator corrects the file. Accepting it (merge, or an explicit human “do this”) is what starts design or plan. Do not start implementation from a draft intent.
+The originator corrects the intent file. Start design or planning only after acceptance. Acceptance requires a merge or an explicit human instruction to proceed. Do not start implementation from a draft intent.
 
 ## Plan before the first implementation edit
 
-Non-trivial work starts read-only. The plan names:
+Start non-trivial work with read-only inspection. Include these items in the plan:
 
 1. Files that change (and the lane that owns them)
 2. Order of work
 3. Risks and what must not change
 4. Proof: which commands or tests show it worked
 
-Commit the plan as `docs/plans/YYYY-MM-DD-<topic>.md`. If implementation departs from the plan, update the plan in the same commit as the departure.
+Commit the plan as `docs/plans/YYYY-MM-DD-<topic>.md` before the first implementation edit. If implementation departs from the plan, update the plan in the same commit as that departure.
 
-A session that has never seen the chat should be able to implement from the plan alone.
+The plan must contain enough context for a new session to implement the change without reading the chat.
 
 ## Verify before claiming done
 
@@ -93,16 +93,16 @@ Absence of evidence is `UNKNOWN`, not a pass.
 
 Before an agent says the work is complete:
 
-1. Run the commands that cover the touched lane. Default: `node scripts/check-scaffold.mjs`, and when packages changed, `npm test` and `npm run typecheck`.
-2. Paste the exit-bearing output (or a tight excerpt that includes the summary and exit code).
-3. Fix the code, not the test, unless the test itself is the bug and the plan said so.
-4. Do not weaken a failing check to make the branch green.
+1. Run the commands that cover the touched lane. Run `node scripts/check-scaffold.mjs` by default. If packages changed, also run `npm test` and `npm run typecheck`. The required commands must exit with code 0.
+2. Paste the output and exit code. A short excerpt is acceptable if it includes the summary and exit code.
+3. If a check fails, fix the code. Change the test only if the test contains the bug and the plan identified that correction.
+4. Do not weaken a failing check to make the branch pass.
 
-The Preview gap review (`docs/reviews/2026-09-02-preview-gap-review.md`) is the worked example: green repository tests were not evidence that a generated project installed.
+See the Preview gap review in `docs/reviews/2026-09-02-preview-gap-review.md`. It records that passing repository tests did not prove that a generated project could install.
 
 ## Parallel work
 
-Lanes, claims, and worktrees in `lanes.md` and `parallel-development.md` are the parallel-session play. One writer per lane. Do not share a claimed lane by staying in different subfolders.
+Follow the lane, claim, and worktree procedures in `lanes.md` and `parallel-development.md`. Each lane has one writer. Different subfolders do not permit two writers in a claimed lane.
 
 ## Production gate
 
@@ -112,4 +112,4 @@ Do not add a headless maintain loop, Trust Engine, or an agent that deploys past
 
 ## When Claude is wrong twice
 
-If an agent repeats a mistake this note or `AGENTS.md` should have caught, correct the operating file in that change. Do not leave the correction in chat.
+If an agent repeats a mistake that this note or `AGENTS.md` should prevent, correct the applicable operating file in that change. Do not leave the correction only in chat.
