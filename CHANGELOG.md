@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-10-29
+
+### Planned
+
+- Apply the requested simplified technical writing style to maintained documentation. Preserve technical meaning and historical records.
+
 ## [Unreleased] - 2026-09-17
 
 ### Fixed
