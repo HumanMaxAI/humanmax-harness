@@ -1,6 +1,6 @@
 # Lanes
 
-Exclusive write ownership for parallel agents. Binding rules are in `/AGENTS.md`.
+Each lane has one active writer. The binding rules are in `/AGENTS.md`.
 
 | Lane | Write set | Notes |
 |---|---|---|
@@ -15,7 +15,7 @@ Exclusive write ownership for parallel agents. Binding rules are in `/AGENTS.md`
 
 ## Shared files
 
-These are not a lane. One agent at a time, preferably a coordinator:
+Only one agent may edit these shared files at a time. Use a coordinator when possible:
 
 - `AGENTS.md`
 - `CLAUDE.md`
@@ -25,8 +25,8 @@ These are not a lane. One agent at a time, preferably a coordinator:
 - `.gitignore`
 - `LICENSE`, `NOTICE`, `GOVERNANCE.md`, `CONTRIBUTING.md`, `SECURITY.md`
 
-`CHANGELOG.md` is append-only per commit. Each lane adds its own bullets. Do not rewrite another lane’s dated entry.
+Each commit may only add its own `CHANGELOG.md` entries. Each lane adds its own bullets. Do not rewrite another lane's dated entry.
 
 ## Conflict rule
 
-If two tasks need the same lane, they are sequential. Split the second task or wait. Do not share a lane by “staying in different subfolders.”
+If two tasks need the same lane, run the tasks sequentially. Split the second task or wait. Different subfolders do not permit two writers in one lane.
