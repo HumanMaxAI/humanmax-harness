@@ -1,19 +1,19 @@
 # Parallel development
 
-This repository is developed by multiple coding agents. Isolation is a product requirement, not a preference.
+Multiple coding agents develop this repository. Each agent must isolate its work.
 
 ## Why
 
-Contracts, runtime, generator, CLI, and Core can move in parallel once the contract version is stable. They must not share a working tree or a write set. Mixed edits produce gateway bypasses, invented layouts, and changelog collisions.
+Work on contracts, runtime, generator, CLI, and Core can proceed in parallel after the contract version is stable. Agents must not share a working tree or a write set. Mixed edits can cause gateway bypasses, conflicting layouts, and changelog collisions.
 
 ## Default pattern
 
-1. Coordinator reads `AGENTS.md`, the current design, and the current review.
-2. Coordinator splits work by lane. One task, one lane, one branch.
-3. Each implementer creates a worktree under `.worktrees/<lane>-<topic>/` and a claim in `.agent-claims/<lane>.json`.
-4. Implementer writes only the claimed write set plus a changelog bullet.
-5. Implementer runs the lane tests and `node scripts/check-scaffold.mjs`.
-6. Coordinator merges, then runs workspace `typecheck` and `test`.
+1. The coordinator reads `AGENTS.md`, the current design, and the current review.
+2. The coordinator assigns each task to one lane and one branch.
+3. Each implementer creates a worktree under `.worktrees/<lane>-<topic>/`. Each implementer also creates a claim in `.agent-claims/<lane>.json`.
+4. Each implementer edits only the claimed write set and adds a changelog bullet.
+5. Each implementer runs the lane tests and `node scripts/check-scaffold.mjs`. These checks must pass before integration.
+6. The coordinator merges the changes. The coordinator then runs workspace `typecheck` and `test`. Both commands must pass.
 
 ## Worktrees
 
@@ -21,7 +21,7 @@ Contracts, runtime, generator, CLI, and Core can move in parallel once the contr
 git worktree add ".worktrees/runtime-gateway" -b feat/runtime-gateway
 ```
 
-`.worktrees/` is gitignored. Never add a worktree that git can track.
+Git ignores `.worktrees/`. Never add a worktree that Git can track.
 
 If a native worktree tool exists in the host, use that instead of raw `git worktree add`.
 
@@ -39,11 +39,11 @@ Claim before the first edit. Example:
 }
 ```
 
-A claimed lane is closed. Do not delete someone else’s claim.
+If a lane has a claim, do not edit that lane. Do not delete another agent's claim.
 
 ## Dispatch prompt minimum
 
-Every subagent prompt must include:
+Include these items in every subagent prompt:
 
 - Lane name and write set
 - Files that must not change
@@ -54,9 +54,9 @@ Every subagent prompt must include:
 
 ## Integration
 
-After two or more lanes land:
+After changes from two or more lanes are merged:
 
-- Re-run `npm test` and `npm run typecheck` at the repository root
-- Check that `packages/core` still has no network or filesystem-write imports
-- Check that no second tool registry or effectful shortcut appeared
-- Confirm design and review files stayed in their directories
+1. Run `npm test` and `npm run typecheck` at the repository root. Both commands must exit with code 0.
+2. Check `packages/core`. It must have no network or filesystem-write imports.
+3. Check the tool registry and action gateway. The changes must not add a second registry or an effectful shortcut.
+4. Check documentation placement. Design and review files must remain in their required directories.

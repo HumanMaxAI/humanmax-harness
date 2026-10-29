@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-10-29
+
+### Planned
+
+- Apply the requested simplified technical writing style to maintained documentation. Preserve technical meaning and historical records.
+
+### Changed
+
+- Add the requested writing rules to `AGENTS.md` and a linked documentation style guide. Apply the style to the README, documentation indexes, and agent operating docs. Preserve existing design, review, and plan records.
+
 ## [Unreleased] - 2026-09-27
 
 ### Added

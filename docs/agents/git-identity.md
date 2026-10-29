@@ -1,6 +1,6 @@
 # Git identity — HumanMaxAI account
 
-This machine has two GitHub identities. Harness work uses the organisation account.
+This machine has two GitHub identities. Use the HumanMaxAI organisation account for Harness writes.
 
 | Path | Account | Use |
 |---|---|---|
@@ -20,6 +20,12 @@ ssh -T git@github.com-hm
 git push -u origin HEAD
 ```
 
-Do not push via `gh` HTTPS. Do not use remote `fork` (`billrain/humanmax-harness`) as source of truth. Do not change `git config`. `gh pr create` as billrain fails with `must be a collaborator`; open the PR from the GitHub UI or an authenticated HumanMaxAI session.
+1. Check that `origin` uses the SSH URL shown above.
+2. Run `ssh -T git@github.com-hm`. The expected account greeting is `Hi HumanMaxAI!`.
+3. Run `git push -u origin HEAD`. Confirm that the push succeeds.
 
-When a lane is finished, commit (with Co-authored-by) and push on this remote in the same turn.
+Do not push through `gh` HTTPS. Do not use remote `fork` (`billrain/humanmax-harness`) as the source of truth. Do not change `git config`.
+
+`gh pr create` as billrain fails with `must be a collaborator`. Open the PR from the GitHub UI or an authenticated HumanMaxAI session.
+
+When lane work is complete, commit with the `Co-authored-by` trailer. Push to this remote in the same turn.
