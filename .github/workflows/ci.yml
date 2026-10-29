@@ -18,7 +18,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run build
-      - run: npm audit --audit-level=high
+      - run: npm audit --audit-level=low
       - run: npm run typecheck
       - run: npm test
 
@@ -37,32 +37,49 @@ jobs:
       - name: Verify packed bootstrap and independent generated project
         run: node packages/cli/verification/distribution.mjs
 
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+      - name: Analyze with CodeQL
+        id: analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
+          output: codeql-results
+      - name: Block release when CodeQL reports alerts
+        run: node scripts/check-codeql-sarif.mjs "${{ steps.analyze.outputs.sarif-output }}"
+
   publish:
-    needs: [workspace, generated-project]
+    needs: [workspace, generated-project, codeql]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: prod
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
           registry-url: https://registry.npmjs.org
-          scope: "@humanmax"
+      - name: Install npm with Trusted Publishing support
+        run: npm install --global --ignore-scripts npm@11.19.0
       - run: npm ci --ignore-scripts
       - run: npm run build
-      - name: Check publishing credentials are configured
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "::error::NPM_TOKEN is missing. Configure it in Settings > Environments > prod > Environment secrets."
-            exit 1
-          fi
       - name: Publish packages that are not already on the registry
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: node scripts/publish-workspaces.mjs

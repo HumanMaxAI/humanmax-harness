@@ -14,6 +14,37 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 - Add the requested writing rules to `AGENTS.md` and a linked documentation style guide. Apply the style to the README, documentation indexes, and agent operating docs. Preserve existing design, review, and plan records.
 
+## [Unreleased] - 2026-09-27
+
+### Added
+
+- Publish the initial `create-humanmax-agent@0.1.0` and `humanmax@0.1.0` entry packages and bind all eight public packages to the repository's GitHub Actions Trusted Publisher identity.
+
+### Changed
+
+- Replace the long-lived npm publication token with GitHub OIDC Trusted Publishing, scoped to the `ci.yml` workflow and `prod` environment, using pinned npm 11.19.0.
+
+### Fixed
+
+- Normalize the `humanmax` wrapper executable path to match npm's published manifest without changing the installed command.
+
+## [Unreleased] - 2026-09-26
+
+### Fixed
+
+- Normalize the `create-humanmax-agent` executable path so npm publishes the committed manifest without auto-correction warnings.
+- Decode quoted YAML mapping-key escapes in one pass, eliminating the remaining CodeQL double-escaping finding without changing the accepted subset.
+- Remove CodeQL findings for superlinear ANSI stripping and descriptor-unsafe project reads, and print bounded rule/path/line diagnostics when SAST still blocks publication.
+
+## [Unreleased] - 2026-09-23
+
+### Fixed
+
+- Extend post-publish npm exact-version verification to three minutes after CLI 0.1.1 became visible just beyond the former two-minute bound.
+- Block npm publication when the committed dependency graph has an npm advisory at any severity, including low and moderate findings.
+- Include bounded, credential-redacted npm diagnostics when a publish command is rejected, and document All Packages token access for the initial unscoped bootstrap releases.
+- Run free GitHub CodeQL `security-extended` SAST for JavaScript/TypeScript and GitHub Actions, blocking publication on any alert or missing/malformed SARIF evidence without exposing the npm environment secret.
+
 ## [Unreleased] - 2026-09-17
 
 ### Fixed
