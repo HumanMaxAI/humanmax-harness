@@ -36,7 +36,7 @@ The Preview default create path uses TypeScript, `tool-agent`, a generic fixture
 
 ## Develop
 
-Use Node 22 or later.
+Use Node 26 or later.
 
 Multiple coding agents develop this repository in parallel.
 

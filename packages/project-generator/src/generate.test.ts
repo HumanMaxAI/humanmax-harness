@@ -27,7 +27,8 @@ test("default output installs published runtime dependencies without a checkout"
   });
   assert.equal(manifest.devDependencies["@humanmax/cli"], "0.1.1");
   assert.equal(manifest.devDependencies.typescript, "5.9.2");
-  assert.equal(manifest.devDependencies["@types/node"], "22.18.0");
+  assert.equal(manifest.engines.node, ">=26");
+  assert.equal(manifest.devDependencies["@types/node"], "26.6.6");
   assert.equal(manifest.overrides, undefined);
   assert.doesNotMatch(JSON.stringify(manifest), /file:|\/src\/cli\.ts/);
   assert.equal(manifest.scripts.humanmax, "humanmax");
@@ -38,6 +39,7 @@ test("default output installs published runtime dependencies without a checkout"
   assert.equal(tsconfig.compilerOptions.outDir, "dist");
   assert.equal(tsconfig.compilerOptions.rewriteRelativeImportExtensions, true);
   assert.match(files.find(f => f.path === "evals/gateway.eval.ts")!.contents, /export async function evaluate/);
+  assert.match(files.find(f => f.path === ".github/workflows/humanmax.yml")!.contents, /node-version: 26/);
 });
 
 test("dry-run reports files and writes nothing", async () => {

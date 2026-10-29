@@ -10,8 +10,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and this proj
 
 - Apply the requested simplified technical writing style to maintained documentation. Preserve technical meaning and historical records.
 
+### Removed
+
+- Remove `docs/agents/git-identity.md` and `.cursor/rules/git-humanmax-account.mdc` from the repository tree. Remaining agent docs still require SSH pushes as HumanMaxAI.
+
 ### Changed
 
+- Raise the workspace engines floor, GitHub Actions `node-version`, generated-project engines, and `@types/node` pin to Node 26 (current Active LTS).
 - Add the requested writing rules to `AGENTS.md` and a linked documentation style guide. Apply the style to the README, documentation indexes, and agent operating docs. Preserve existing design, review, and plan records.
 
 ## [Unreleased] - 2026-09-27
