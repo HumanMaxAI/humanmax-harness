@@ -50,7 +50,7 @@ node scripts/publish-workspaces.mjs --dry-run
 
 The script resolves registry state before publishing. It treats only E404 as absent. It verifies the exact version after publication. Authentication and network failures stop the release. If post-publish verification returns E404, the script retries for up to three minutes. It does not publish the same version again. Other lookup errors fail immediately.
 
-Trusted Publishing requires npm 11.5.1 or later and Node 22.14.0 or later. The workflow keeps Node 22. It installs exact npm 11.19.0 without lifecycle scripts before dependency installation. OIDC publication from this public repository automatically creates npm provenance attestations.
+Trusted Publishing requires npm 11.5.1 or later and Node 22.14.0 or later. The workflow uses Node 26. It installs exact npm 11.19.0 without lifecycle scripts before dependency installation. OIDC publication from this public repository automatically creates npm provenance attestations.
 
 Changes to the workflow take effect only on a new `main` run after merge. If you re-run an older workflow, GitHub uses that commit's workflow.
 

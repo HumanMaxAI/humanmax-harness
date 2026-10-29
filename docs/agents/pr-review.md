@@ -38,4 +38,4 @@ Report at most five nits. Give the count of any remaining nits. Do not block a P
 1. Add this lane's changelog entry with today's local date. Do not rewrite another lane's entries.
 2. Generate the `Co-authored-by` trailer with `node scripts/co-author.mjs`. Include the trailer in the commit.
 3. Include verification output in the PR or in the session that opened the PR.
-4. Push over SSH as HumanMaxAI. Follow `docs/agents/git-identity.md`.
+4. Push over SSH as HumanMaxAI.

@@ -193,7 +193,7 @@ function packageJson(name: string, destination: string, mode: DependencyMode): s
       version: "0.0.0",
       private: true,
       type: "module",
-      engines: { node: ">=22.18.0" },
+      engines: { node: ">=26" },
       scripts: {
         build: "tsc -p tsconfig.json",
         typecheck: "tsc -p tsconfig.json --noEmit",
@@ -202,7 +202,7 @@ function packageJson(name: string, destination: string, mode: DependencyMode): s
         humanmax: "humanmax",
       },
       dependencies,
-      devDependencies: { ...devDependencies, typescript: "5.9.2", "@types/node": "22.18.0" },
+      devDependencies: { ...devDependencies, typescript: "5.9.2", "@types/node": "26.6.6" },
       ...(mode === "local-file" ? { overrides } : {}),
     },
     null,
@@ -257,7 +257,7 @@ Read tools execute. Write tools stop at the action gateway (\`review\`). Product
 
 ## Preview install constraints
 
-- Requires Node.js 22.18 or later. Commit the package-lock.json produced by npm install for reproducible installs.
+- Requires Node.js 26 or later. Commit the package-lock.json produced by npm install for reproducible installs.
 - ${mode === "published" ? "Dependencies are pinned public npm packages; this project does not depend on the generator checkout or bootstrap cache." : "Repository fixture mode: local file dependencies require the generating checkout to stay available. This mode is not used by the create CLI."}
 - Use \`npm run humanmax -- <command>\` to invoke the installed project CLI.
 - \`.github/workflows/humanmax.yml\` runs manually. Its checks must execute before a hosted result can be called PASS; automatic triggers are not enabled by this Preview.
@@ -510,7 +510,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
       - run: npm ci
       - run: npm run build
       - run: npm run typecheck
