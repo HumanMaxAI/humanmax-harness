@@ -1,51 +1,67 @@
 # npm publish from CI
 
-**Date:** 2026-09-02
+**Date:** 2026-09-02  
+**Updated:** 2026-09-27
 
-Harness publishes Preview packages from GitHub Actions on `main` only. The `publish` job runs after `workspace` and `generated-project`. The `workspace` job runs tests, typecheck, and `npm audit --audit-level=high`. A pull request never publishes.
+Harness publishes Preview packages from GitHub Actions on `main` only. The `publish` job runs after `workspace`, `generated-project`, and `codeql`. The `workspace` job runs tests, typecheck, and `npm audit --audit-level=low`. A pull request never publishes.
 
-## Environment secret
+The publish job authenticates to npm through Trusted Publishing with GitHub OIDC. It has `contents: read` and `id-token: write`. It runs on a GitHub-hosted runner. It uses pinned npm 11.19.0. It does not read an npm write token. Quality and CodeQL jobs cannot mint an OIDC token. Those jobs do not use the `prod` environment.
 
-1. Open `HumanMaxAI/humanmax-harness` in GitHub.
-2. Go to Settings → Environments → **prod** → Environment secrets.
-3. Set `NPM_TOKEN` with the token permissions listed below.
-4. Confirm that the `publish` job references `environment: prod`. GitHub supplies the secret after any configured environment protections pass.
+## One-time bootstrap prerequisite
 
-The quality jobs do not reference this environment.
+npm requires a package to exist before a Trusted Publisher can be attached. The initial `create-humanmax-agent@0.1.0` and `humanmax@0.1.0` publications were completed on 2026-09-27 through an interactive npm session with 2FA. Both installed commands were then verified from a clean public-registry installation.
 
-The token must be an npm **granular access token** with:
+Do not repeat the bootstrap path for a future release. Do not copy a local npm credential into the repository, the workflow, or a GitHub environment.
 
-- Read and write
-- Bypass 2FA
-- Packages: `@humanmax/*`, `humanmax`, `create-humanmax-agent`
+## Package-side Trusted Publisher configuration
 
-CI maps `NPM_TOKEN` to `NODE_AUTH_TOKEN`. If the token is missing, the publish job fails with a configuration error. A successful workflow must not silently skip publication because credentials are missing. Do not put the token in the repository, a committed `.env` file, or workflow logs.
+Configure each package at npmjs.com → Package → Settings → Trusted Publisher → GitHub Actions with these exact, case-sensitive values:
 
-Workflow changes take effect on a new `main` run after merge. If you repeat a run from an older commit, GitHub uses that commit's workflow. That run does not receive the new environment binding.
+| Field | Value |
+|---|---|
+| Organization or user | `HumanMaxAI` |
+| Repository | `humanmax-harness` |
+| Workflow filename | `ci.yml` |
+| Environment | `prod` |
+| Allowed action | direct `npm publish` |
 
-## Idempotence
+The record was created and read back from npm for all eight packages on 2026-09-27:
 
-`scripts/publish-workspaces.mjs` skips a package if the registry already contains that exact version. An otherwise successful `main` rebuild does not fail because the version already exists.
+- `@humanmax/contracts`
+- `@humanmax/findings`
+- `@humanmax/core`
+- `@humanmax/runtime-harness`
+- `@humanmax/project-generator`
+- `@humanmax/cli`
+- `create-humanmax-agent`
+- `humanmax`
 
-1. Run the command below to preview the release. The command does not publish packages or require a token.
-2. Inspect the planned versions and registry results. A successful preview does not prove publication.
+The repository URL in every package manifest must continue to identify `https://github.com/HumanMaxAI/humanmax-harness`. npm validates the workflow identity only when a publish is attempted. A saved configuration is not proof that the values match.
+
+After the OIDC workflow is merged, delete the `prod` environment's `NPM_TOKEN`, revoke the npm token, and set package publishing access to require 2FA and disallow traditional tokens. This does not disable the configured Trusted Publisher.
+
+## Release behavior
+
+`scripts/publish-workspaces.mjs` skips a package when that exact version already exists on the registry. A green `main` rebuild does not fail for that reason. Preview a release without publishing or OIDC:
 
 ```sh
 node scripts/publish-workspaces.mjs --dry-run
 ```
 
-The script unwraps npm's workspace-name/version map. It resolves all registry lookups before publication. Only E404 means that a version is absent. After publication, the script verifies the resulting registry version. Authentication and network failures stop the release.
+The script resolves registry state before publishing. It treats only E404 as absent. It verifies the exact version after publication. Authentication and network failures stop the release. If post-publish verification returns E404, the script retries for up to three minutes. It does not publish the same version again. Other lookup errors fail immediately.
 
-The workflow checks secret availability in a step. Secrets are not supported in its job-level condition.
+Trusted Publishing requires npm 11.5.1 or later and Node 22.14.0 or later. The workflow keeps Node 22. It installs exact npm 11.19.0 without lifecycle scripts before dependency installation. OIDC publication from this public repository automatically creates npm provenance attestations.
 
-The npm registry may briefly return E404 after it accepts a publish. If post-publish exact-version verification returns E404, verification retries for up to two minutes. The script does not publish the package again. Other lookup errors fail immediately. If the version remains absent after that wait, the release stops. It reports the publish exit status and the verification window.
+Changes to the workflow take effect only on a new `main` run after merge. If you re-run an older workflow, GitHub uses that commit's workflow.
 
-Historical facts as of 2026-09-13: the six scoped packages had public `0.1.0` versions. This did not prove that generated-project distribution worked. See the [release candidate verification](../reviews/2026-09-13-npm-release-candidate.md). At that date, `create-humanmax-agent` and `humanmax` returned E404. The prepared CLI version was `0.1.1`.
+## Verification
 
-Do not treat a dry-run plan as permission to publish the remaining scaffold packages before their acceptance gaps are resolved.
+Before merging the migration:
 
-## Not done by this workflow
+1. Confirm `npm view create-humanmax-agent version` and `npm view humanmax version` both return `0.1.0`.
+2. Run `npm trust list <package> --json` for all eight packages. Confirm the exact Trusted Publisher identity above.
+3. Confirm `.github/workflows/ci.yml` contains no `NPM_TOKEN`, `NODE_AUTH_TOKEN`, or `secrets.*` reference in the publish job.
+4. Run `node --test scripts/workflow-security.test.mjs`, the full workspace tests, typecheck, build, scaffold verification, and `npm audit --audit-level=low`.
+5. Merge. Confirm that the new `main` publish job succeeds without the environment secret.
 
-Generator 0.1.1 defaults to fixed npm versions. Before publication, the generated-project job verifies candidate tarballs through a temporary registry. The job checks direct runtime installation and project independence. See the [dependency repair verification](../reviews/2026-09-15-npm-dependency-verification.md).
-
-Verify newly published versions on public npm after the actual release. A successful candidate test does not prove that publication occurred.
+Generator 0.1.1 defaults to fixed npm versions. The generated-project job verifies candidate tarballs through a temporary registry before publication. The job checks direct runtime installation and project independence. See the [release candidate verification](../reviews/2026-09-13-npm-release-candidate.md).
