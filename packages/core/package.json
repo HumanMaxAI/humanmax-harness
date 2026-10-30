@@ -1,6 +1,6 @@
 {
   "name": "@humanmax/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "Apache-2.0",
   "description": "Deterministic Core evaluation for HumanMax Agent Harness. No network, filesystem writes, or model calls.",
@@ -37,7 +37,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@humanmax/contracts": "^0.1.0",
-    "@humanmax/findings": "^0.1.0"
+    "@humanmax/contracts": "^0.2.0",
+    "@humanmax/findings": "^0.2.0"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@humanmax/runtime-harness",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "Apache-2.0",
   "description": "Preview runtime: run budgets, tool registry, and the single action-gateway seam.",
@@ -37,6 +37,6 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@humanmax/contracts": "^0.1.0"
+    "@humanmax/contracts": "^0.2.0"
   }
 }

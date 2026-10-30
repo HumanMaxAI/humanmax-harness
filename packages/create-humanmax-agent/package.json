@@ -1,6 +1,6 @@
 {
   "name": "create-humanmax-agent",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "Apache-2.0",
   "description": "Create a Preview HumanMax Agent Harness project (TypeScript tool-agent + base).",
@@ -40,6 +40,6 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@humanmax/project-generator": "^0.1.1"
+    "@humanmax/project-generator": "^0.2.0"
   }
 }

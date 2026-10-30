@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 /** Published projects must install independently of the machine that created them. */
 export type DependencyMode = "published" | "local-file";
 const PUBLISHED_VERSIONS: Record<string, string> = {
-  contracts: "0.1.0", "runtime-harness": "0.1.0", cli: "0.1.1",
+  contracts: "0.2.0", "runtime-harness": "0.2.0", cli: "0.2.0",
 };
 
 /** Directory names under `packages/`, which are also the npm name suffixes. */

@@ -1,6 +1,6 @@
 {
   "name": "@humanmax/project-generator",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "license": "Apache-2.0",
   "description": "Deterministic Preview project generator for HumanMax Agent Harness.",
@@ -38,6 +38,6 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@humanmax/contracts": "^0.1.0"
+    "@humanmax/contracts": "^0.2.0"
   }
 }

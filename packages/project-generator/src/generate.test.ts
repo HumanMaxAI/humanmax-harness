@@ -22,10 +22,10 @@ test("default output installs published runtime dependencies without a checkout"
   const files = generateProject({ destination: resolve("npm-consumer"), name: "npm-consumer", dryRun: true }).files;
   const manifest = JSON.parse(files.find(f => f.path === "package.json")!.contents);
   assert.deepEqual(manifest.dependencies, {
-    "@humanmax/contracts": "0.1.0",
-    "@humanmax/runtime-harness": "0.1.0",
+    "@humanmax/contracts": "0.2.0",
+    "@humanmax/runtime-harness": "0.2.0",
   });
-  assert.equal(manifest.devDependencies["@humanmax/cli"], "0.1.1");
+  assert.equal(manifest.devDependencies["@humanmax/cli"], "0.2.0");
   assert.equal(manifest.devDependencies.typescript, "5.9.2");
   assert.equal(manifest.engines.node, ">=26");
   assert.equal(manifest.devDependencies["@types/node"], "26.6.6");
