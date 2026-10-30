@@ -8,8 +8,8 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
-// This temporary registry serves exact candidate tarballs. Unchanged packages
-// still come from public npm; no repository symlinks or package rewrites are used.
+// This temporary registry serves all eight exact release candidate tarballs.
+// External dependencies come from public npm; no repository symlinks or package rewrites are used.
 const execute = promisify(execFile);
 const repo = fileURLToPath(new URL("../../../", import.meta.url));
 const root = await mkdtemp(join(tmpdir(), "humanmax-distribution-"));
@@ -28,9 +28,8 @@ async function run(command, args, cwd, expected = 0) {
 }
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 try {
-  // Only changed/unpublished release candidates are substituted. Runtime,
-  // contracts and other unchanged dependencies must install from public npm.
-  for (const directory of ["project-generator", "cli", "create-humanmax-agent", "humanmax"]) {
+  // Every package is part of the Node 26 release. Verify the complete candidate graph.
+  for (const directory of ["contracts", "findings", "core", "runtime-harness", "project-generator", "cli", "create-humanmax-agent", "humanmax"]) {
     const manifest = JSON.parse(await readFile(join(repo, "packages", directory, "package.json"), "utf8"));
     const [pack] = JSON.parse(await run(npm, ["pack", "-w", manifest.name, "--pack-destination", root, "--json"], repo));
     const bytes = await readFile(join(root, pack.filename));
@@ -66,21 +65,26 @@ try {
   const project = join(root, "agent");
   await mkdir(bootstrap);
   await writeFile(join(bootstrap, "package.json"), '{"private":true,"type":"module"}\n');
-  await run(npm, ["install", "create-humanmax-agent@0.1.0", "humanmax@0.1.0", "--ignore-scripts", "--registry", registry], bootstrap);
+  await run(npm, ["install", `create-humanmax-agent@${candidates.get("create-humanmax-agent").manifest.version}`, `humanmax@${candidates.get("humanmax").manifest.version}`, "--ignore-scripts", "--registry", registry], bootstrap);
   const aliasVersion = await run(process.execPath, [join(bootstrap, "node_modules/.bin/humanmax"), "--version"], bootstrap);
   assert.equal(aliasVersion.trim(), candidates.get("@humanmax/cli").manifest.version);
   await run(process.execPath, [join(bootstrap, "node_modules/.bin/create-humanmax-agent"), project, "--defaults"], bootstrap);
   const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
   assert.doesNotMatch(JSON.stringify(manifest), /file:|bootstrap|node_modules\/.*\/src\//);
   assert.equal(manifest.overrides, undefined);
-  assert.equal(manifest.dependencies["@humanmax/runtime-harness"], "0.1.0");
+  assert.equal(manifest.dependencies["@humanmax/runtime-harness"], candidates.get("@humanmax/runtime-harness").manifest.version);
+  assert.equal(manifest.engines.node, ">=26");
   assert.equal(manifest.devDependencies["@humanmax/cli"], candidates.get("@humanmax/cli").manifest.version);
   await rm(bootstrap, { recursive: true, force: true });
   await run(npm, ["install", "--ignore-scripts", "--registry", registry], project);
   await run(npm, ["ci", "--ignore-scripts", "--registry", registry], project);
   await run(npm, ["ls", "--all"], project);
-  for (const name of ["cli", "runtime-harness", "contracts", "project-generator"]) {
-    assert.equal((await lstat(join(project, "node_modules/@humanmax", name))).isSymbolicLink(), false);
+  for (const name of ["cli", "runtime-harness", "contracts", "project-generator", "core", "findings"]) {
+    const installed = join(project, "node_modules/@humanmax", name);
+    assert.equal((await lstat(installed)).isSymbolicLink(), false);
+    const manifest = JSON.parse(await readFile(join(installed, "package.json"), "utf8"));
+    assert.equal(manifest.version, candidates.get(`@humanmax/${name}`).manifest.version);
+    assert.equal(manifest.engines.node, ">=26");
   }
   // Moving the project proves generated paths do not refer back to its original
   // location. The bootstrap is already gone before npm installs anything.

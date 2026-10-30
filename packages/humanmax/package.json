@@ -1,6 +1,6 @@
 {
   "name": "humanmax",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "Apache-2.0",
   "description": "Convenience wrapper that installs the project-pinned humanmax CLI.",
@@ -26,6 +26,6 @@
     "cli.js"
   ],
   "dependencies": {
-    "@humanmax/cli": "^0.1.0"
+    "@humanmax/cli": "^0.2.0"
   }
 }

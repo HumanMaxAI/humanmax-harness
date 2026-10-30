@@ -2,7 +2,7 @@
 
 HumanMax Agent Harness is an open-source, local-first project generator and runtime scaffold for assurance-ready AI agents.
 
-This repository is in **Preview scaffold**. Packages exist and compile. They do not yet generate a customer project. The product goal is:
+This repository is in **Preview**. The packages generate TypeScript `tool-agent` projects with the `base` pack. The product goal is:
 
 > Create a local-first, assurance-ready agent project with explicit action boundaries, jurisdiction-aware controls and evidence-producing CI.
 
@@ -33,6 +33,17 @@ packages/findings                rule catalogue
 ```
 
 The Preview default create path uses TypeScript, `tool-agent`, a generic fixture, `assisted`, `base`, and GitHub CI.
+
+## Preview 0.2.0 migration
+
+Version 0.2.0 requires Node 26 or later. The 0.1.x package line remains available for Node 22 users.
+
+1. Upgrade Node to version 26 or later.
+2. Create a new project with `npx create-humanmax-agent@0.2.0 my-agent --defaults`.
+3. In the new project, run `npm install`, `npm run build`, `npm run typecheck`, and `npm test`. Each command must succeed.
+4. Run project commands with `npm run humanmax -- <command>`. Use the project-pinned CLI.
+
+For an existing project, use `humanmax upgrade --dry-run` to inspect proposed changes. Full `upgrade --apply` remains outside Preview. A new package release does not authorize overwriting user-owned files.
 
 ## Develop
 
