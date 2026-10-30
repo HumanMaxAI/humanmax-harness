@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-10-30
+
+### Planned
+
+- Prepare Preview 0.2.0 for all eight npm packages. Synchronize internal dependencies and generated project pins with the Node 26 requirement. Publication remains unverified until CI and public npm installation succeed.
+
 ## [Unreleased] - 2026-10-29
 
 ### Planned
