@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
 import { test } from "node:test";
 import { realPath } from "./dependencies.ts";
-import { defaultCreateOptions, generateProject } from "./generate.ts";
+import { defaultCreateOptions, fileDigest, generateProject } from "./generate.ts";
 
 async function emptyDir(): Promise<string> {
   return mkdtemp(join(tmpdir(), "humanmax-generate-"));
@@ -16,6 +16,27 @@ test("preview default path does not include sg-core", () => {
   assert.deepEqual(options.profiles, ["base"]);
   assert.equal(options.template, "tool-agent");
   assert.equal(options.language, "typescript");
+});
+
+test("named projects include actionable starter and security documentation", async () => {
+  const destination = join(await emptyDir(), "sanguo-yanyi");
+  generateProject({ destination, name: "sanguo-yanyi" });
+  const readme = await readFile(join(destination, "README.md"), "utf8");
+  const security = await readFile(join(destination, "SECURITY.md"), "utf8");
+  const instructions = await readFile(join(destination, "AGENTS.md"), "utf8");
+  const lock = JSON.parse(await readFile(join(destination, ".humanmax/generator.lock"), "utf8"));
+
+  assert.match(readme, /^# sanguo-yanyi\n/);
+  assert.match(readme, /default entry point runs a gateway fixture/);
+  assert.match(readme, /\[SECURITY\.md\]\(\.\/SECURITY\.md\)/);
+  assert.match(security, /^# Security for sanguo-yanyi\n/);
+  assert.match(security, /Private reporting channel: not configured/);
+  assert.match(security, /productionEnforcement.*unconfigured/);
+  assert.doesNotMatch(security, /dev@humanmax\.ai|security@humanmax\.ai/);
+  assert.match(instructions, /README\.md/);
+  assert.match(instructions, /SECURITY\.md/);
+  assert.match(instructions, /application behavior/);
+  assert.deepEqual(lock.files["SECURITY.md"], { class: "mergeable", digest: fileDigest(security) });
 });
 
 test("default output installs published runtime dependencies without a checkout", () => {

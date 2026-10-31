@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-10-31
+
+### Planned
+
+- Repair generic project documentation in sanguo-yanyi. Add project-named security documentation and explicit README maintenance instructions to new projects. Prepare generator and bootstrap 0.2.1 candidates.
+
+### Fixed
+
+- Prepare generator and bootstrap 0.2.1 with a project-named SECURITY.md, clear starter entry-point instructions, and explicit agent duties to maintain project documentation. Security contacts and response commitments remain unconfigured until the maintainer supplies them.
+- Verify missing security documents in upgrade previews and packed bootstrap output. Preserve user documentation and Preview boundaries.
+
 ## [Unreleased] - 2026-10-30
 
 ### Planned

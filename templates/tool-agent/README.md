@@ -6,6 +6,9 @@ Preview starter: one read tool plus one reversible write tool. Effectful calls m
 
 Generated layout:
 
+- `README.md` — named starter instructions, documentation maintenance, and verification limits
+- `SECURITY.md` — project security boundaries and an explicitly unconfigured private reporting channel
+- `AGENTS.md` — maintain README and SECURITY.md with application changes
 - `.humanmax/project.yaml` — `template: tool-agent`, `productionEnforcement: unconfigured`, `enforcementAdapter: local-review`
 - `.humanmax/generator.lock` — file ownership classes
 - `src/index.ts` — fixture run (`runFixture`)

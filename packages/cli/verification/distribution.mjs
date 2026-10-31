@@ -70,6 +70,12 @@ try {
   assert.equal(aliasVersion.trim(), candidates.get("@humanmax/cli").manifest.version);
   await run(process.execPath, [join(bootstrap, "node_modules/.bin/create-humanmax-agent"), project, "--defaults"], bootstrap);
   const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
+  assert.match(await readFile(join(project, "README.md"), "utf8"), /^# agent\n/);
+  const security = await readFile(join(project, "SECURITY.md"), "utf8");
+  assert.match(security, /^# Security for agent\n/);
+  assert.match(security, /Private reporting channel: not configured/);
+  const receipt = JSON.parse(await readFile(join(project, ".humanmax/generator.lock"), "utf8"));
+  assert.equal(receipt.files["SECURITY.md"].class, "mergeable");
   assert.doesNotMatch(JSON.stringify(manifest), /file:|bootstrap|node_modules\/.*\/src\//);
   assert.equal(manifest.overrides, undefined);
   assert.equal(manifest.dependencies["@humanmax/runtime-harness"], candidates.get("@humanmax/runtime-harness").manifest.version);
