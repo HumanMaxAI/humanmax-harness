@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-10-31
+
+### Planned
+
+- Repair generic project documentation in sanguo-yanyi. Add project-named security documentation and explicit README maintenance instructions to new projects. Prepare generator and bootstrap 0.2.1 candidates.
+
 ## [Unreleased] - 2026-10-30
 
 ### Planned
