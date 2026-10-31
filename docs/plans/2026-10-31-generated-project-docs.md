@@ -11,7 +11,7 @@ Intent: [Generated documentation](./2026-10-31-generated-project-docs-intent.md)
 - `packages/project-generator/package.json`, `packages/create-humanmax-agent/package.json`, and root `package-lock.json`: prepare 0.2.1 patch candidates; coordinate the shared lockfile update through npm. Existing runtime/CLI pins remain 0.2.0.
 - `packages/cli/verification/distribution.mjs`: verify README and SECURITY.md from packed bootstrap generation.
 - `CHANGELOG.md` and a dated review under `docs/reviews/`: record fixes and verification.
-- `/Users/onesg/Github/HumanMaxAI/playground/sanguo-yanyi/README.md`, `SECURITY.md`, and `.humanmax/generator.lock`: repair only application documentation and its reviewed receipt entries. Keep generatorVersion 0.2.0, every other receipt entry, and all application/control files intact.
+- `/Users/onesg/Github/HumanMaxAI/playground/sanguo-yanyi/README.md`, `SECURITY.md`, `AGENTS.md`, and `.humanmax/generator.lock`: repair only application documentation and its reviewed receipt entries. Keep generatorVersion 0.2.0, every other receipt entry, and all application/control files intact.
 
 ## Procedure
 
@@ -29,6 +29,6 @@ Intent: [Generated documentation](./2026-10-31-generated-project-docs-intent.md)
 - Security reporting contact remains explicitly unconfigured. The generator must not copy a Harness maintainer's address into a customer's policy.
 - Upgrade preview must report the missing SECURITY.md without writing it or overwriting user documentation.
 - All repository checks must exit 0. A new generated project must install from candidate tarballs, compile, and pass its own CLI checks.
-- The project documentation patch must be reviewable before apply. SHA-256 comparisons must prove all pre-existing files other than README.md and generator.lock are unchanged.
+- The project documentation patch must be reviewable before apply. SHA-256 comparisons must prove all pre-existing files other than README.md, AGENTS.md, and generator.lock are unchanged.
 - Recompute only the explicitly reviewed document digests. Do not suppress a finding, alter runtime policy, or rebaseline unrelated drift to obtain PASS.
 - A deterministic starter does not automatically understand an application's future purpose. Its README must identify that limitation and the maintenance action.
