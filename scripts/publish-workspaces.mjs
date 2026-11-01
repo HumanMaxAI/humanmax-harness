@@ -14,14 +14,14 @@ const ORDER = [
 ];
 
 const REGISTRY = "https://registry.npmjs.org";
-const DEFAULT_VERIFICATION_ATTEMPTS = 37;
+const DEFAULT_VERIFICATION_ATTEMPTS = 121;
 const DEFAULT_VERIFICATION_DELAY_MS = 5_000;
 const MAX_FAILURE_DIAGNOSTIC_CHARS = 4_096;
 function npm(args) {
   return spawnSync("npm", args, { encoding: "utf8", timeout: 120_000, maxBuffer: 8 * 1024 * 1024 });
 }
 function sleep(milliseconds) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 function npmFailureDiagnostic(result) {
   const raw = [result.error?.message, result.stderr, result.stdout]
@@ -39,8 +39,35 @@ function npmFailureDiagnostic(result) {
   return `; npm output:\n${bounded.trim()}`;
 }
 
-export function publishWorkspaces({
+// Read the immutable version resource, rather than a cached package version list.
+export async function registryVersionExists(name, version, { fetch: request = globalThis.fetch } = {}) {
+  try {
+    const response = await request(`${REGISTRY}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`, {
+      headers: { Accept: "application/json", "Cache-Control": "no-cache" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (response.status === 404) {
+      await response.body?.cancel();
+      return false;
+    }
+    if (response.status !== 200) {
+      await response.body?.cancel();
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    if (data.name !== name || data.version !== version) throw new Error("invalid version identity");
+    return true;
+  } catch (error) {
+    // Do not include response bodies, credentials, or arbitrary network diagnostics.
+    const reason = /^HTTP \d{3}$/.test(error?.message) ? ` (${error.message})` : "";
+    throw new Error(`registry lookup failed for ${name}@${version}${reason}; publication stopped`);
+  }
+}
+
+export async function publishWorkspaces({
   run = npm,
+  lookup = registryVersionExists,
   log = console.log,
   names = ORDER,
   dryRun = false,
@@ -61,43 +88,36 @@ export function publishWorkspaces({
     }
     return version;
   }
-  function alreadyPublished(name, version) {
-    const result = run(["view", `${name}@${version}`, "version", "--json", `--registry=${REGISTRY}`]);
-    let parsed;
-    try { parsed = JSON.parse(result.stdout); } catch { /* fail below */ }
-    if (result.status === 0 && parsed === version) return true;
-    if (result.status !== 0 && parsed?.error?.code === "E404") return false;
-    throw new Error(`registry lookup failed for ${name}@${version}; publication stopped`);
-  }
-  function waitUntilPublished(name, version) {
+  async function waitUntilPublished(name, version) {
     for (let attempt = 1; attempt <= verificationAttempts; attempt += 1) {
-      if (alreadyPublished(name, version)) return true;
+      if (await lookup(name, version)) return true;
       if (attempt < verificationAttempts) {
         log(`waiting for ${name}@${version} registry propagation (${attempt}/${verificationAttempts})`);
-        wait(verificationDelayMs);
+        await wait(verificationDelayMs);
       }
     }
     return false;
   }
 
   // Resolve every version and registry lookup before the first irreversible write.
-  const plan = names.map(name => {
+  const plan = [];
+  for (const name of names) {
     const version = workspaceVersion(name);
-    return { name, version, exists: alreadyPublished(name, version) };
-  });
+    plan.push({ name, version, exists: await lookup(name, version) });
+  }
   for (const { name, version, exists } of plan) {
     if (exists) { log(`skip ${name}@${version} (already on the registry)`); continue; }
     if (dryRun) { log(`would publish ${name}@${version}`); continue; }
     const result = run(["publish", "-w", name, "--access", "public", `--registry=${REGISTRY}`]);
     const verified = result.status === 0
-      ? waitUntilPublished(name, version)
-      : alreadyPublished(name, version);
+      ? await waitUntilPublished(name, version)
+      : await lookup(name, version);
     if (!verified) {
       if (result.status !== 0) {
         throw new Error(`npm publish failed for ${name}@${version} (exit ${result.status ?? "null"}); registry verification failed${npmFailureDiagnostic(result)}`);
       }
       const waitSeconds = Math.ceil((verificationAttempts - 1) * verificationDelayMs / 1_000);
-      throw new Error(`npm publish returned exit 0 for ${name}@${version}, but the registry did not expose that version after ${verificationAttempts} checks over ${waitSeconds}s`);
+      throw new Error(`npm publish returned exit 0 for ${name}@${version}, but the registry did not expose that version after ${verificationAttempts} checks and ${waitSeconds}s of scheduled waits; rerun the release to skip verified versions${npmFailureDiagnostic(result)}`);
     }
     log(`${result.status === 0 ? "published" : "exists"} ${name}@${version}`);
   }
@@ -110,5 +130,5 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (!dryRun && !process.env.NODE_AUTH_TOKEN && !process.env.NPM_TOKEN) {
     throw new Error("NODE_AUTH_TOKEN or NPM_TOKEN is required to publish from CI");
   }
-  publishWorkspaces({ dryRun });
+  await publishWorkspaces({ dryRun });
 }
