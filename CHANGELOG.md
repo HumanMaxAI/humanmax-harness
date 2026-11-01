@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/) and this project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-11-01
+
+### Fixed
+
+- Verify npm releases through the exact public version resource. Request cache revalidation and allow 600 seconds of scheduled waits. Preserve bounded requests, failure diagnostics, and safe retries that skip public versions.
+
 ## [Unreleased] - 2026-10-31
 
 ### Planned
